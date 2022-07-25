@@ -1,14 +1,11 @@
-﻿using DevSim.Desktop.Core.Enums;
-using DevSim.Desktop.Core.Interfaces;
-using DevSim.Desktop.Core.Services;
-using DevSim.Shared.Utilities;
-using DevSim.Shared.Win32;
+﻿using DevSim.Interfaces;
+using DevSim.Enums;
+using DevSim.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using static DevSim.Shared.Win32.User32;
+using static DevSim.Win32.User32;
+using DevSim.Win32;
 
 namespace DevSim.Desktop.Win.Services
 {
@@ -19,28 +16,20 @@ namespace DevSim.Desktop.Win.Services
         private volatile bool _inputBlocked;
         private Thread _inputProcessingThread;
 
-        public Tuple<double, double> GetAbsolutePercentFromRelativePercent(double percentX, double percentY, IScreenCapturer capturer)
+        public Tuple<double, double> GetAbsolutePercentFromRelativePercent(double percentX, double percentY)
         {
-            var absoluteX = (capturer.CurrentScreenBounds.Width * percentX) + capturer.CurrentScreenBounds.Left - capturer.GetVirtualScreenBounds().Left;
-            var absoluteY = (capturer.CurrentScreenBounds.Height * percentY) + capturer.CurrentScreenBounds.Top - capturer.GetVirtualScreenBounds().Top;
-            return new Tuple<double, double>(absoluteX / capturer.GetVirtualScreenBounds().Width, absoluteY / capturer.GetVirtualScreenBounds().Height);
+            double absoluteX = 0, absoluteY = 0;
+            return new Tuple<double, double>(absoluteX , absoluteY);
         }
 
-        public Tuple<double, double> GetAbsolutePointFromRelativePercent(double percentX, double percentY, IScreenCapturer capturer)
+        public Tuple<double, double> GetAbsolutePointFromRelativePercent(double percentX, double percentY)
         {
-            var absoluteX = (capturer.CurrentScreenBounds.Width * percentX) + capturer.CurrentScreenBounds.Left;
-            var absoluteY = (capturer.CurrentScreenBounds.Height * percentY) + capturer.CurrentScreenBounds.Top;
+            double absoluteX = 0, absoluteY = 0;
             return new Tuple<double, double>(absoluteX, absoluteY);
         }
 
         public void Init()
         {
-            App.Current.Dispatcher.Invoke(() =>
-            {
-                App.Current.Exit -= App_Exit;
-                App.Current.Exit += App_Exit;
-            });
-
             StartInputProcessingThread();
         }
 
@@ -109,7 +98,7 @@ namespace DevSim.Desktop.Win.Services
             });
         }
 
-        public void SendMouseButtonAction(int button, ButtonAction buttonAction, double percentX, double percentY, Viewer viewer)
+        public void SendMouseButtonAction(int button, ButtonAction buttonAction, double percentX, double percentY)
         {
             TryOnInputDesktop(() =>
             {
@@ -160,7 +149,7 @@ namespace DevSim.Desktop.Win.Services
                         default:
                             return;
                     }
-                    var xyPercent = GetAbsolutePercentFromRelativePercent(percentX, percentY, viewer.Capturer);
+                    var xyPercent = GetAbsolutePercentFromRelativePercent(percentX, percentY);
                     // Coordinates must be normalized.  The bottom-right coordinate is mapped to 65535.
                     var normalizedX = xyPercent.Item1 * 65535D;
                     var normalizedY = xyPercent.Item2 * 65535D;
@@ -175,13 +164,13 @@ namespace DevSim.Desktop.Win.Services
             });
         }
 
-        public void SendMouseMove(double percentX, double percentY, Viewer viewer)
+        public void SendMouseMove(double percentX, double percentY)
         {
             TryOnInputDesktop(() =>
             {
                 try
                 {
-                    var xyPercent = GetAbsolutePercentFromRelativePercent(percentX, percentY, viewer.Capturer);
+                    var xyPercent = GetAbsolutePercentFromRelativePercent(percentX, percentY);
                     // Coordinates must be normalized.  The bottom-right coordinate is mapped to 65535.
                     var normalizedX = xyPercent.Item1 * 65535D;
                     var normalizedY = xyPercent.Item2 * 65535D;
@@ -221,20 +210,7 @@ namespace DevSim.Desktop.Win.Services
             });
         }
 
-        public void SendText(string transferText)
-        {
-            TryOnInputDesktop(() =>
-            {
-                try
-                {
-                    SendKeys.SendWait(transferText);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Write(ex);
-                }
-            });
-        }
+
 
         public void SetKeyStatesUp()
         {
@@ -282,10 +258,7 @@ namespace DevSim.Desktop.Win.Services
             });
         }
 
-        private void App_Exit(object sender, System.Windows.ExitEventArgs e)
-        {
-            _cancelTokenSource?.Cancel();
-        }
+
         private void CheckQueue(CancellationToken cancelToken)
         {
             while (!cancelToken.IsCancellationRequested)

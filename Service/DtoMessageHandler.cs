@@ -1,37 +1,35 @@
-﻿using MessagePack;
-using DevSim.Shared.Enums;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using DevSim.Interfaces;
+using DevSim.Enums;
+using DevSim.Utilities;
+using DevSim.Models;
+using DevSim.Models.RemoteControlDtos;
+using Newtonsoft.Json;
 
-namespace DevSim.Desktop.Core.Services
+namespace DevSim.Services
 {
     public interface IDtoMessageHandler
     {
-        Task ParseMessage(Viewer viewer, byte[] message);
+        Task ParseMessage(byte[] message);
     }
     public class DtoMessageHandler : IDtoMessageHandler
     {
         public DtoMessageHandler(IKeyboardMouseInput keyboardMouseInput,
-            IAudioCapturer audioCapturer,
-            IClipboardService clipboardService,
-            IFileTransferService fileTransferService)
+            IClipboardService clipboardService)
         {
             KeyboardMouseInput = keyboardMouseInput;
-            AudioCapturer = audioCapturer;
             ClipboardService = clipboardService;
-            FileTransferService = fileTransferService;
         }
 
-        private IAudioCapturer AudioCapturer { get; }
         private IClipboardService ClipboardService { get; }
-        private IFileTransferService FileTransferService { get; }
         private IKeyboardMouseInput KeyboardMouseInput { get; }
-        public async Task ParseMessage(Viewer viewer, byte[] message)
+        public async Task ParseMessage(byte[] message)
         {
             try
             {
-                var baseDto = MessagePackSerializer.Deserialize<BaseDto>(message);
+                var baseDto = JsonConvert.DeserializeObject<BaseDto>(message.ToString());
 
                 switch (baseDto.DtoType)
                 {
@@ -48,7 +46,7 @@ namespace DevSim.Desktop.Core.Services
                     case BaseDtoType.KeyPress:
                     case BaseDtoType.SetKeyStatesUp:
                         {
-                            if (!viewer.HasControl)
+                            // if (!viewer.HasControl)
                             {
                                 return;
                             }
@@ -60,20 +58,17 @@ namespace DevSim.Desktop.Core.Services
 
                 switch (baseDto.DtoType)
                 {
-                    case BaseDtoType.SelectScreen:
-                        SelectScreen(message, viewer);
-                        break;
                     case BaseDtoType.MouseMove:
-                        MouseMove(message, viewer);
+                        MouseMove(message);
                         break;
                     case BaseDtoType.MouseDown:
-                        MouseDown(message, viewer);
+                        MouseDown(message);
                         break;
                     case BaseDtoType.MouseUp:
-                        MouseUp(message, viewer);
+                        MouseUp(message);
                         break;
                     case BaseDtoType.Tap:
-                        Tap(message, viewer);
+                        Tap(message);
                         break;
                     case BaseDtoType.MouseWheel:
                         MouseWheel(message);
@@ -85,16 +80,13 @@ namespace DevSim.Desktop.Core.Services
                         KeyUp(message);
                         break;
                     case BaseDtoType.CtrlAltDel:
-                        await viewer.SendCtrlAltDel();
+                        // await viewer.SendCtrlAltDel();
                         break;
                     case BaseDtoType.ToggleAudio:
                         ToggleAudio(message);
                         break;
                     case BaseDtoType.ToggleBlockInput:
                         ToggleBlockInput(message);
-                        break;
-                    case BaseDtoType.ToggleWebRtcVideo:
-                        ToggleWebRtcVideo(message, viewer);
                         break;
                     case BaseDtoType.ClipboardTransfer:
                         await ClipboardTransfer(message);
@@ -105,17 +97,11 @@ namespace DevSim.Desktop.Core.Services
                     case BaseDtoType.File:
                         await DownloadFile(message);
                         break;
-                    case BaseDtoType.WindowsSessions:
-                        await GetWindowsSessions(viewer);
-                        break;
                     case BaseDtoType.SetKeyStatesUp:
                         SetKeyStatesUp();
                         break;
-                    case BaseDtoType.FrameReceived:
-                        HandleFrameReceived(viewer);
-                        break;
                     case BaseDtoType.OpenFileTransferWindow:
-                        OpenFileTransferWindow(viewer);
+                        // OpenFileTransferWindow(viewer);
                         break;
                     default:
                         break;
@@ -129,10 +115,11 @@ namespace DevSim.Desktop.Core.Services
 
         private async Task ClipboardTransfer(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<ClipboardTransferDto>(message);
+            var dto = JsonConvert.DeserializeObject<ClipboardTransferDto>(message.ToString());
             if (dto.TypeText)
             {
-                KeyboardMouseInput.SendText(dto.Text);
+                // TODO: 
+                // KeyboardMouseInput.SendText(dto.Text);
             }
             else
             {
@@ -142,27 +129,19 @@ namespace DevSim.Desktop.Core.Services
 
         private async Task DownloadFile(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<FileDto>(message);
-            await FileTransferService.ReceiveFile(dto.Buffer,
-                dto.FileName,
-                dto.MessageId,
-                dto.EndOfFile,
-                dto.StartOfFile);
+            var dto = JsonConvert.DeserializeObject<FileDto>(message.ToString());
+            // await FileTransferService.ReceiveFile(dto.Buffer,
+            //     dto.FileName,
+            //     dto.MessageId,
+            //     dto.EndOfFile,
+            //     dto.StartOfFile);
         }
 
-        private async Task GetWindowsSessions(Viewer viewer)
-        {
-            await viewer.SendWindowsSessions();
-        }
 
-        private void HandleFrameReceived(Viewer viewer)
-        {
-            viewer.DequeuePendingFrame();
-        }
 
         private void KeyDown(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<KeyDownDto>(message);
+            var dto = JsonConvert.DeserializeObject<KeyDownDto>(message.ToString());
             if (dto?.Key is null)
             {
                 Logger.Write("Key input is empty.", EventType.Warning);
@@ -173,7 +152,7 @@ namespace DevSim.Desktop.Core.Services
 
         private async Task KeyPress(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<KeyPressDto>(message);
+            var dto = JsonConvert.DeserializeObject<KeyPressDto>(message.ToString());
 
             if (dto?.Key is null)
             {
@@ -188,7 +167,7 @@ namespace DevSim.Desktop.Core.Services
 
         private void KeyUp(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<KeyUpDto>(message);
+            var dto = JsonConvert.DeserializeObject<KeyUpDto>(message.ToString());
             if (dto?.Key is null)
             {
                 Logger.Write("Key input is empty.", EventType.Warning);
@@ -197,39 +176,35 @@ namespace DevSim.Desktop.Core.Services
             KeyboardMouseInput.SendKeyUp(dto.Key);
         }
 
-        private void MouseDown(byte[] message, Viewer viewer)
+        private void MouseDown(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<MouseDownDto>(message);
-            KeyboardMouseInput.SendMouseButtonAction(dto.Button, ButtonAction.Down, dto.PercentX, dto.PercentY, viewer);
+            var dto = JsonConvert.DeserializeObject<MouseDownDto>(message.ToString());
+            KeyboardMouseInput.SendMouseButtonAction(dto.Button, ButtonAction.Down, dto.PercentX, dto.PercentY);
         }
 
-        private void MouseMove(byte[] message, Viewer viewer)
+        private void MouseMove(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<MouseMoveDto>(message);
-            KeyboardMouseInput.SendMouseMove(dto.PercentX, dto.PercentY, viewer);
+            var dto = JsonConvert.DeserializeObject<MouseMoveDto>(message.ToString());
+            KeyboardMouseInput.SendMouseMove(dto.PercentX, dto.PercentY);
         }
 
-        private void MouseUp(byte[] message, Viewer viewer)
+        private void MouseUp(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<MouseUpDto>(message);
-            KeyboardMouseInput.SendMouseButtonAction(dto.Button, ButtonAction.Up, dto.PercentX, dto.PercentY, viewer);
+            var dto = JsonConvert.DeserializeObject<MouseUpDto>(message.ToString());
+            KeyboardMouseInput.SendMouseButtonAction(dto.Button, ButtonAction.Up, dto.PercentX, dto.PercentY);
         }
 
         private void MouseWheel(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<MouseWheelDto>(message);
+            var dto = JsonConvert.DeserializeObject<MouseWheelDto>(message.ToString());
             KeyboardMouseInput.SendMouseWheel(-(int)dto.DeltaY);
         }
 
-        private void OpenFileTransferWindow(Viewer viewer)
-        {
-            FileTransferService.OpenFileTransferWindow(viewer);
-        }
 
-        private void SelectScreen(byte[] message, Viewer viewer)
+
+        private void SelectScreen(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<SelectScreenDto>(message);
-            viewer.Capturer.SetSelectedScreen(dto.DisplayName);
+            var dto = JsonConvert.DeserializeObject<SelectScreenDto>(message.ToString());
         }
 
         private void SetKeyStatesUp()
@@ -237,29 +212,27 @@ namespace DevSim.Desktop.Core.Services
             KeyboardMouseInput.SetKeyStatesUp();
         }
 
-        private void Tap(byte[] message, Viewer viewer)
+        private void Tap(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<TapDto>(message);
-            KeyboardMouseInput.SendMouseButtonAction(0, ButtonAction.Down, dto.PercentX, dto.PercentY, viewer);
-            KeyboardMouseInput.SendMouseButtonAction(0, ButtonAction.Up, dto.PercentX, dto.PercentY, viewer);
+            var dto = JsonConvert.DeserializeObject<TapDto>(message.ToString());
+            KeyboardMouseInput.SendMouseButtonAction(0, ButtonAction.Down, dto.PercentX, dto.PercentY);
+            KeyboardMouseInput.SendMouseButtonAction(0, ButtonAction.Up, dto.PercentX, dto.PercentY);
         }
 
         private void ToggleAudio(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<ToggleAudioDto>(message);
-            AudioCapturer.ToggleAudio(dto.ToggleOn);
+            var dto = JsonConvert.DeserializeObject<ToggleAudioDto>(message.ToString());
         }
 
         private void ToggleBlockInput(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<ToggleBlockInputDto>(message);
+            var dto = JsonConvert.DeserializeObject<ToggleBlockInputDto>(message.ToString());
             KeyboardMouseInput.ToggleBlockInput(dto.ToggleOn);
         }
 
-        private void ToggleWebRtcVideo(byte[] message, Viewer viewer)
+        private void ToggleWebRtcVideo(byte[] message)
         {
-            var dto = MessagePackSerializer.Deserialize<ToggleWebRtcVideoDto>(message);
-            viewer.ToggleWebRtcVideo(dto.ToggleOn);
+            var dto = JsonConvert.DeserializeObject<ToggleWebRtcVideoDto>(message.ToString());
         }
     }
 }
