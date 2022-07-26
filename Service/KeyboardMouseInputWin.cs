@@ -7,18 +7,17 @@ using System.Threading;
 using static DevSim.Win32.User32;
 using DevSim.Win32;
 
-namespace DevSim.Desktop.Win.Services
+namespace DevSim.Services
 {
     public class KeyboardMouseInputWin : IKeyboardMouseInput
     {
         private readonly ConcurrentQueue<Action> _inputActions = new();
         private CancellationTokenSource _cancelTokenSource;
-        private volatile bool _inputBlocked;
         private Thread _inputProcessingThread;
 
         public Tuple<double, double> GetAbsolutePercentFromRelativePercent(double percentX, double percentY)
         {
-            double absoluteX = 0, absoluteY = 0;
+            double absoluteX = 0.345, absoluteY = 0.223;
             return new Tuple<double, double>(absoluteX , absoluteY);
         }
 
@@ -28,7 +27,7 @@ namespace DevSim.Desktop.Win.Services
             return new Tuple<double, double>(absoluteX, absoluteY);
         }
 
-        public void Init()
+        public KeyboardMouseInputWin()
         {
             StartInputProcessingThread();
         }
@@ -98,7 +97,7 @@ namespace DevSim.Desktop.Win.Services
             });
         }
 
-        public void SendMouseButtonAction(int button, ButtonAction buttonAction, double percentX, double percentY)
+        public void SendMouseButtonAction(ButtonCode button, ButtonAction buttonAction, double percentX, double percentY)
         {
             TryOnInputDesktop(() =>
             {
@@ -107,7 +106,7 @@ namespace DevSim.Desktop.Win.Services
                     MOUSEEVENTF mouseEvent;
                     switch (button)
                     {
-                        case 0:
+                        case ButtonCode.Left:
                             switch (buttonAction)
                             {
                                 case ButtonAction.Down:
@@ -120,7 +119,7 @@ namespace DevSim.Desktop.Win.Services
                                     return;
                             }
                             break;
-                        case 1:
+                        case ButtonCode.Middle:
                             switch (buttonAction)
                             {
                                 case ButtonAction.Down:
@@ -133,7 +132,7 @@ namespace DevSim.Desktop.Win.Services
                                     return;
                             }
                             break;
-                        case 2:
+                        case ButtonCode.Right:
                             switch (buttonAction)
                             {
                                 case ButtonAction.Down:
@@ -248,16 +247,6 @@ namespace DevSim.Desktop.Win.Services
             });
         }
 
-        public void ToggleBlockInput(bool toggleOn)
-        {
-            _inputActions.Enqueue(() =>
-            {
-                _inputBlocked = toggleOn;
-                var result = BlockInput(toggleOn);
-                Logger.Write($"Result of ToggleBlockInput set to {toggleOn}: {result}");
-            });
-        }
-
 
         private void CheckQueue(CancellationToken cancelToken)
         {
@@ -269,6 +258,8 @@ namespace DevSim.Desktop.Win.Services
                     {
                         action();
                     }
+                } catch (Exception err) {
+                    Console.WriteLine(err);
                 }
                 finally
                 {
@@ -345,10 +336,6 @@ namespace DevSim.Desktop.Win.Services
                 Logger.Write($"New input processing thread started on thread {Thread.CurrentThread.ManagedThreadId}.");
                 _cancelTokenSource = new CancellationTokenSource();
 
-                if (_inputBlocked)
-                {
-                    ToggleBlockInput(true);
-                }
                 CheckQueue(_cancelTokenSource.Token);
             });
 
@@ -362,15 +349,6 @@ namespace DevSim.Desktop.Win.Services
             {
                 try
                 {
-                    if (!Win32Interop.SwitchToInputDesktop())
-                    {
-                        Logger.Write("Desktop switch failed during input processing.");
-
-                        // Thread likely has hooks in current desktop.  SendKeys will create one with no way to unhook it.
-                        // Start a new thread for processing input.
-                        StartInputProcessingThread();
-                        return;
-                    }
                     inputAction();
                 }
                 catch (Exception ex)

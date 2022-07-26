@@ -65,8 +65,11 @@ namespace DevSim.Win32
                     return false;
                 }
 
-                var result = SetThreadDesktop(inputDesktop) && SwitchDesktop(inputDesktop);
+                var result = SetThreadDesktop(inputDesktop);
+                var errCode = Marshal.GetLastWin32Error();
+                result = SwitchDesktop(inputDesktop);
                 _lastInputDesktop = inputDesktop;
+                
                 return result;
             }
             catch

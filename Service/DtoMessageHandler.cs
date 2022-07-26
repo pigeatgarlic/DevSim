@@ -10,52 +10,19 @@ using Newtonsoft.Json;
 
 namespace DevSim.Services
 {
-    public interface IDtoMessageHandler
-    {
-        Task ParseMessage(byte[] message);
-    }
     public class DtoMessageHandler : IDtoMessageHandler
     {
-        public DtoMessageHandler(IKeyboardMouseInput keyboardMouseInput,
-            IClipboardService clipboardService)
+        public DtoMessageHandler(IKeyboardMouseInput keyboardMouseInput)
         {
             KeyboardMouseInput = keyboardMouseInput;
-            ClipboardService = clipboardService;
         }
 
-        private IClipboardService ClipboardService { get; }
         private IKeyboardMouseInput KeyboardMouseInput { get; }
         public async Task ParseMessage(byte[] message)
         {
             try
             {
                 var baseDto = JsonConvert.DeserializeObject<BaseDto>(message.ToString());
-
-                switch (baseDto.DtoType)
-                {
-                    case BaseDtoType.MouseMove:
-                    case BaseDtoType.MouseDown:
-                    case BaseDtoType.MouseUp:
-                    case BaseDtoType.Tap:
-                    case BaseDtoType.MouseWheel:
-                    case BaseDtoType.KeyDown:
-                    case BaseDtoType.KeyUp:
-                    case BaseDtoType.CtrlAltDel:
-                    case BaseDtoType.ToggleBlockInput:
-                    case BaseDtoType.ClipboardTransfer:
-                    case BaseDtoType.KeyPress:
-                    case BaseDtoType.SetKeyStatesUp:
-                        {
-                            // if (!viewer.HasControl)
-                            {
-                                return;
-                            }
-                        }
-                        break;
-                    default:
-                        break;
-                }
-
                 switch (baseDto.DtoType)
                 {
                     case BaseDtoType.MouseMove:
@@ -79,29 +46,11 @@ namespace DevSim.Services
                     case BaseDtoType.KeyUp:
                         KeyUp(message);
                         break;
-                    case BaseDtoType.CtrlAltDel:
-                        // await viewer.SendCtrlAltDel();
-                        break;
-                    case BaseDtoType.ToggleAudio:
-                        ToggleAudio(message);
-                        break;
-                    case BaseDtoType.ToggleBlockInput:
-                        ToggleBlockInput(message);
-                        break;
-                    case BaseDtoType.ClipboardTransfer:
-                        await ClipboardTransfer(message);
-                        break;
                     case BaseDtoType.KeyPress:
                         await KeyPress(message);
                         break;
-                    case BaseDtoType.File:
-                        await DownloadFile(message);
-                        break;
                     case BaseDtoType.SetKeyStatesUp:
                         SetKeyStatesUp();
-                        break;
-                    case BaseDtoType.OpenFileTransferWindow:
-                        // OpenFileTransferWindow(viewer);
                         break;
                     default:
                         break;
@@ -112,32 +61,6 @@ namespace DevSim.Services
                 Logger.Write(ex);
             }
         }
-
-        private async Task ClipboardTransfer(byte[] message)
-        {
-            var dto = JsonConvert.DeserializeObject<ClipboardTransferDto>(message.ToString());
-            if (dto.TypeText)
-            {
-                // TODO: 
-                // KeyboardMouseInput.SendText(dto.Text);
-            }
-            else
-            {
-                await ClipboardService.SetText(dto.Text);
-            }
-        }
-
-        private async Task DownloadFile(byte[] message)
-        {
-            var dto = JsonConvert.DeserializeObject<FileDto>(message.ToString());
-            // await FileTransferService.ReceiveFile(dto.Buffer,
-            //     dto.FileName,
-            //     dto.MessageId,
-            //     dto.EndOfFile,
-            //     dto.StartOfFile);
-        }
-
-
 
         private void KeyDown(byte[] message)
         {
@@ -200,13 +123,6 @@ namespace DevSim.Services
             KeyboardMouseInput.SendMouseWheel(-(int)dto.DeltaY);
         }
 
-
-
-        private void SelectScreen(byte[] message)
-        {
-            var dto = JsonConvert.DeserializeObject<SelectScreenDto>(message.ToString());
-        }
-
         private void SetKeyStatesUp()
         {
             KeyboardMouseInput.SetKeyStatesUp();
@@ -217,22 +133,6 @@ namespace DevSim.Services
             var dto = JsonConvert.DeserializeObject<TapDto>(message.ToString());
             KeyboardMouseInput.SendMouseButtonAction(0, ButtonAction.Down, dto.PercentX, dto.PercentY);
             KeyboardMouseInput.SendMouseButtonAction(0, ButtonAction.Up, dto.PercentX, dto.PercentY);
-        }
-
-        private void ToggleAudio(byte[] message)
-        {
-            var dto = JsonConvert.DeserializeObject<ToggleAudioDto>(message.ToString());
-        }
-
-        private void ToggleBlockInput(byte[] message)
-        {
-            var dto = JsonConvert.DeserializeObject<ToggleBlockInputDto>(message.ToString());
-            KeyboardMouseInput.ToggleBlockInput(dto.ToggleOn);
-        }
-
-        private void ToggleWebRtcVideo(byte[] message)
-        {
-            var dto = JsonConvert.DeserializeObject<ToggleWebRtcVideoDto>(message.ToString());
         }
     }
 }

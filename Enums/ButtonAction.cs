@@ -5,4 +5,10 @@
         Down,
         Up
     }
+    public enum ButtonCode
+    {
+        Left,
+        Right,
+        Middle
+    }
 }

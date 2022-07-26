@@ -7,7 +7,7 @@ namespace DevSim.Models.RemoteControlDtos
     public class MouseDownDto : BaseDto
     {
         [DataMember(Name = "Button")]
-        public int Button { get; set; }
+        public ButtonCode Button { get; set; }
 
         [DataMember(Name = "DtoType")]
         public override BaseDtoType DtoType { get; init; } = BaseDtoType.MouseDown;
