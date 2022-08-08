@@ -20,20 +20,25 @@ namespace DevSim.Controllers
         }
 
         [HttpPost("Move")]
-        public void PostMouseMove(int X, int Y)
+        public void PostMouseMove([FromBody]Dictionary<string,float> data)
         {
-            _key.SendMouseMove((double)X,(double)Y);
+            _key.SendMouseMove(data["X"],data["Y"]);
+        }
+        [HttpPost("Wheel")]
+        public void PostMouseWheel([FromBody]int deltaY)
+        {
+            _key.SendMouseWheel(deltaY);
         }
 
         [HttpPost("Up")]
-        public void PostMouseUp(int X, int Y,ButtonCode button)
+        public void PostMouseUp([FromBody]ButtonCode button)
         {
-            _key.SendMouseButtonAction(button,ButtonAction.Up,(double)X,(double)Y);
+            _key.SendMouseButtonAction(button,ButtonAction.Up);
         }
         [HttpPost("Down")]
-        public void PostMouseDown(int X, int Y,ButtonCode button)
+        public void PostMouseDown([FromBody]ButtonCode button)
         {
-            _key.SendMouseButtonAction(button,ButtonAction.Down,(double)X,(double)Y);
+            _key.SendMouseButtonAction(button,ButtonAction.Down);
         }
     }
 }

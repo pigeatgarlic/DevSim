@@ -15,54 +15,14 @@ namespace DevSim.Services
         private CancellationTokenSource _cancelTokenSource;
         private Thread _inputProcessingThread;
 
-        public Tuple<double, double> GetAbsolutePercentFromRelativePercent(double percentX, double percentY)
-        {
-            double absoluteX = 0.345, absoluteY = 0.223;
-            return new Tuple<double, double>(absoluteX , absoluteY);
-        }
-
-        public Tuple<double, double> GetAbsolutePointFromRelativePercent(double percentX, double percentY)
-        {
-            double absoluteX = 0, absoluteY = 0;
-            return new Tuple<double, double>(absoluteX, absoluteY);
-        }
+        private Tuple<float,float> prev;
 
         public KeyboardMouseInputWin()
         {
+            prev = new Tuple<float, float>(0,0);
             StartInputProcessingThread();
         }
 
-        public void SendKeyDown(string key)
-        {
-            TryOnInputDesktop(() =>
-            {
-                try
-                {
-                    if (!ConvertJavaScriptKeyToVirtualKey(key, out var keyCode) || keyCode is null)
-                    {
-                        return;
-                    }
-
-                    var union = new InputUnion()
-                    {
-                        ki = new KEYBDINPUT()
-                        {
-                            wVk = keyCode.Value,
-                            wScan = (ScanCodeShort)MapVirtualKeyEx((uint)keyCode.Value, VkMapType.MAPVK_VK_TO_VSC, GetKeyboardLayout()),
-                            time = 0,
-                            dwExtraInfo = GetMessageExtraInfo()
-                        }
-                    };
-                    var input = new INPUT() { type = InputType.KEYBOARD, U = union };
-                    SendInput(1, new INPUT[] { input }, INPUT.Size);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Write(ex);
-                }
-
-            });
-        }
 
         public void SendKeyUp(string key)
         {
@@ -97,7 +57,42 @@ namespace DevSim.Services
             });
         }
 
-        public void SendMouseButtonAction(ButtonCode button, ButtonAction buttonAction, double percentX, double percentY)
+
+
+        public void SendKeyDown(string key)
+        {
+            TryOnInputDesktop(() =>
+            {
+                try
+                {
+                    if (!ConvertJavaScriptKeyToVirtualKey(key, out var keyCode) || keyCode is null)
+                    {
+                        return;
+                    }
+
+                    var union = new InputUnion()
+                    {
+                        ki = new KEYBDINPUT()
+                        {
+                            wVk = keyCode.Value,
+                            wScan = (ScanCodeShort)MapVirtualKeyEx((uint)keyCode.Value, VkMapType.MAPVK_VK_TO_VSC, GetKeyboardLayout()),
+                            time = 0,
+                            dwExtraInfo = GetMessageExtraInfo()
+                        }
+                    };
+                    var input = new INPUT() { type = InputType.KEYBOARD, U = union };
+                    SendInput(1, new INPUT[] { input }, INPUT.Size);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Write(ex);
+                }
+
+            });
+        }
+
+
+        public void SendMouseButtonAction(ButtonCode button, ButtonAction buttonAction)
         {
             TryOnInputDesktop(() =>
             {
@@ -148,11 +143,7 @@ namespace DevSim.Services
                         default:
                             return;
                     }
-                    var xyPercent = GetAbsolutePercentFromRelativePercent(percentX, percentY);
-                    // Coordinates must be normalized.  The bottom-right coordinate is mapped to 65535.
-                    var normalizedX = xyPercent.Item1 * 65535D;
-                    var normalizedY = xyPercent.Item2 * 65535D;
-                    var union = new InputUnion() { mi = new MOUSEINPUT() { dwFlags = MOUSEEVENTF.ABSOLUTE | mouseEvent | MOUSEEVENTF.VIRTUALDESK, dx = (int)normalizedX, dy = (int)normalizedY, time = 0, mouseData = 0, dwExtraInfo = GetMessageExtraInfo() } };
+                    var union = new InputUnion() { mi = new MOUSEINPUT() { dwFlags = mouseEvent | MOUSEEVENTF.VIRTUALDESK, dx = 0, dy = 0, time = 0, mouseData = 0, dwExtraInfo = GetMessageExtraInfo() } };
                     var input = new INPUT() { type = InputType.MOUSE, U = union };
                     SendInput(1, new INPUT[] { input }, INPUT.Size);
                 }
@@ -163,16 +154,16 @@ namespace DevSim.Services
             });
         }
 
-        public void SendMouseMove(double percentX, double percentY)
+        public void SendMouseMove(float percentX, float percentY)
         {
             TryOnInputDesktop(() =>
             {
                 try
                 {
-                    var xyPercent = GetAbsolutePercentFromRelativePercent(percentX, percentY);
                     // Coordinates must be normalized.  The bottom-right coordinate is mapped to 65535.
-                    var normalizedX = xyPercent.Item1 * 65535D;
-                    var normalizedY = xyPercent.Item2 * 65535D;
+                    prev = new Tuple<float, float>(percentX,percentY);
+                    var normalizedX = (double)percentX * 65535D;
+                    var normalizedY = (double)percentY * 65535D;
                     var union = new InputUnion() { mi = new MOUSEINPUT() { dwFlags = MOUSEEVENTF.ABSOLUTE | MOUSEEVENTF.MOVE | MOUSEEVENTF.VIRTUALDESK, dx = (int)normalizedX, dy = (int)normalizedY, time = 0, mouseData = 0, dwExtraInfo = GetMessageExtraInfo() } };
                     var input = new INPUT() { type = InputType.MOUSE, U = union };
                     SendInput(1, new INPUT[] { input }, INPUT.Size);
@@ -210,7 +201,6 @@ namespace DevSim.Services
         }
 
 
-
         public void SetKeyStatesUp()
         {
             TryOnInputDesktop(() =>
@@ -245,6 +235,7 @@ namespace DevSim.Services
                 thread.SetApartmentState(ApartmentState.STA);
                 thread.Start();
             });
+
         }
 
 

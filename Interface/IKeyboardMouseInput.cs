@@ -9,9 +9,9 @@ namespace DevSim.Interfaces
     {
         void SendKeyDown(string key);
         void SendKeyUp(string key);
-        void SendMouseMove(double percentX, double percentY);
+        void SendMouseMove(float percentX, float percentY);
         void SendMouseWheel(int deltaY);
         void SetKeyStatesUp();
-        void SendMouseButtonAction(ButtonCode button, ButtonAction buttonAction, double percentX, double percentY);
+        void SendMouseButtonAction(ButtonCode button, ButtonAction buttonAction);
     }
 }
