@@ -23,24 +23,24 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
 });
 
-app.Use(async (context,next) => {
-    var body = context.Request.Body;
-    var route = context.Request.Path;
+// app.Use(async (context,next) => {
+//     var body = context.Request.Body;
+//     var route = context.Request.Path;
 
-    byte[] data = new byte[100];
-    await body.ReadAsync(data,0,100);
-    var datastr = Encoding.Default.GetString(data);
-    Console.WriteLine($"incoming {route} : {datastr}");
-    try
-    {
-        await next(context);
-    }
-    catch (System.Exception err)
-    {
-        Console.WriteLine($"error : {err.Message}");
-        throw;
-    }
-});
+//     byte[] data = new byte[100];
+//     await body.ReadAsync(data,0,100);
+//     var datastr = Encoding.Default.GetString(data);
+//     Console.WriteLine($"incoming {route} : {datastr}");
+//     try
+//     {
+//         await next(context);
+//     }
+//     catch (System.Exception err)
+//     {
+//         Console.WriteLine($"error : {err.Message}");
+//         throw;
+//     }
+// });
 
 app.UseAuthorization();
 
