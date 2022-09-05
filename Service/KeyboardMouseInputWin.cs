@@ -24,186 +24,144 @@ namespace DevSim.Services
         }
 
 
-        public void SendKeyUp(string key)
+        public async Task SendKeyUp(string key)
         {
-            TryOnInputDesktop(() =>
+            Try(() =>
             {
-                try
+                if (!ConvertJavaScriptKeyToVirtualKey(key, out var keyCode) || keyCode is null)
                 {
-                    if (!ConvertJavaScriptKeyToVirtualKey(key, out var keyCode) || keyCode is null)
-                    {
-                        return;
-                    }
+                    return;
+                }
 
-                    var union = new InputUnion()
+                var union = new InputUnion()
+                {
+                    ki = new KEYBDINPUT()
                     {
-                        ki = new KEYBDINPUT()
+                        wVk = keyCode.Value,
+                        wScan = (ScanCodeShort)MapVirtualKeyEx((uint)keyCode.Value, VkMapType.MAPVK_VK_TO_VSC, GetKeyboardLayout()),
+                        time = 0,
+                        dwFlags = KEYEVENTF.KEYUP,
+                        dwExtraInfo = GetMessageExtraInfo()
+                    }
+                };
+                var input = new INPUT() { type = InputType.KEYBOARD, U = union };
+                SendInput(1, new INPUT[] { input }, INPUT.Size);
+            });
+        }
+
+
+
+        public async Task SendKeyDown(string key)
+        {
+            Try(() =>
+            {
+                if (!ConvertJavaScriptKeyToVirtualKey(key, out var keyCode) || keyCode is null)
+                    return;
+
+                var union = new InputUnion()
+                {
+                    ki = new KEYBDINPUT()
+                    {
+                        wVk = keyCode.Value,
+                        wScan = (ScanCodeShort)MapVirtualKeyEx((uint)keyCode.Value, VkMapType.MAPVK_VK_TO_VSC, GetKeyboardLayout()),
+                        time = 0,
+                        dwExtraInfo = GetMessageExtraInfo()
+                    }
+                };
+                var input = new INPUT() { type = InputType.KEYBOARD, U = union };
+                SendInput(1, new INPUT[] { input }, INPUT.Size);
+            });
+        }
+
+
+        public async Task SendMouseButtonAction(ButtonCode button, ButtonAction buttonAction)
+        {
+            Try(() =>
+            {
+                MOUSEEVENTF mouseEvent;
+                switch (button)
+                {
+                    case ButtonCode.Left:
+                        switch (buttonAction)
                         {
-                            wVk = keyCode.Value,
-                            wScan = (ScanCodeShort)MapVirtualKeyEx((uint)keyCode.Value, VkMapType.MAPVK_VK_TO_VSC, GetKeyboardLayout()),
-                            time = 0,
-                            dwFlags = KEYEVENTF.KEYUP,
-                            dwExtraInfo = GetMessageExtraInfo()
+                            case ButtonAction.Down:
+                                mouseEvent = MOUSEEVENTF.LEFTDOWN;
+                                break;
+                            case ButtonAction.Up:
+                                mouseEvent = MOUSEEVENTF.LEFTUP;
+                                break;
+                            default:
+                                return;
                         }
-                    };
-                    var input = new INPUT() { type = InputType.KEYBOARD, U = union };
-                    SendInput(1, new INPUT[] { input }, INPUT.Size);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Write(ex);
-                }
-
-            });
-        }
-
-
-
-        public void SendKeyDown(string key)
-        {
-            TryOnInputDesktop(() =>
-            {
-                try
-                {
-                    if (!ConvertJavaScriptKeyToVirtualKey(key, out var keyCode) || keyCode is null)
-                    {
-                        return;
-                    }
-
-                    var union = new InputUnion()
-                    {
-                        ki = new KEYBDINPUT()
+                        break;
+                    case ButtonCode.Middle:
+                        switch (buttonAction)
                         {
-                            wVk = keyCode.Value,
-                            wScan = (ScanCodeShort)MapVirtualKeyEx((uint)keyCode.Value, VkMapType.MAPVK_VK_TO_VSC, GetKeyboardLayout()),
-                            time = 0,
-                            dwExtraInfo = GetMessageExtraInfo()
+                            case ButtonAction.Down:
+                                mouseEvent = MOUSEEVENTF.MIDDLEDOWN;
+                                break;
+                            case ButtonAction.Up:
+                                mouseEvent = MOUSEEVENTF.MIDDLEUP;
+                                break;
+                            default:
+                                return;
                         }
-                    };
-                    var input = new INPUT() { type = InputType.KEYBOARD, U = union };
-                    SendInput(1, new INPUT[] { input }, INPUT.Size);
+                        break;
+                    case ButtonCode.Right:
+                        switch (buttonAction)
+                        {
+                            case ButtonAction.Down:
+                                mouseEvent = MOUSEEVENTF.RIGHTDOWN;
+                                break;
+                            case ButtonAction.Up:
+                                mouseEvent = MOUSEEVENTF.RIGHTUP;
+                                break;
+                            default:
+                                return;
+                        }
+                        break;
+                    default:
+                        return;
                 }
-                catch (Exception ex)
-                {
-                    Logger.Write(ex);
-                }
-
+                var union = new InputUnion() { mi = new MOUSEINPUT() { dwFlags = mouseEvent | MOUSEEVENTF.VIRTUALDESK, dx = 0, dy = 0, time = 0, mouseData = 0, dwExtraInfo = GetMessageExtraInfo() } };
+                var input = new INPUT() { type = InputType.MOUSE, U = union };
+                SendInput(1, new INPUT[] { input }, INPUT.Size);
             });
         }
 
-
-        public void SendMouseButtonAction(ButtonCode button, ButtonAction buttonAction)
+        public async Task SendMouseMove(float percentX, float percentY)
         {
-            TryOnInputDesktop(() =>
+            Try(() =>
             {
-                try
-                {
-                    MOUSEEVENTF mouseEvent;
-                    switch (button)
-                    {
-                        case ButtonCode.Left:
-                            switch (buttonAction)
-                            {
-                                case ButtonAction.Down:
-                                    mouseEvent = MOUSEEVENTF.LEFTDOWN;
-                                    break;
-                                case ButtonAction.Up:
-                                    mouseEvent = MOUSEEVENTF.LEFTUP;
-                                    break;
-                                default:
-                                    return;
-                            }
-                            break;
-                        case ButtonCode.Middle:
-                            switch (buttonAction)
-                            {
-                                case ButtonAction.Down:
-                                    mouseEvent = MOUSEEVENTF.MIDDLEDOWN;
-                                    break;
-                                case ButtonAction.Up:
-                                    mouseEvent = MOUSEEVENTF.MIDDLEUP;
-                                    break;
-                                default:
-                                    return;
-                            }
-                            break;
-                        case ButtonCode.Right:
-                            switch (buttonAction)
-                            {
-                                case ButtonAction.Down:
-                                    mouseEvent = MOUSEEVENTF.RIGHTDOWN;
-                                    break;
-                                case ButtonAction.Up:
-                                    mouseEvent = MOUSEEVENTF.RIGHTUP;
-                                    break;
-                                default:
-                                    return;
-                            }
-                            break;
-                        default:
-                            return;
-                    }
-                    var union = new InputUnion() { mi = new MOUSEINPUT() { dwFlags = mouseEvent | MOUSEEVENTF.VIRTUALDESK, dx = 0, dy = 0, time = 0, mouseData = 0, dwExtraInfo = GetMessageExtraInfo() } };
-                    var input = new INPUT() { type = InputType.MOUSE, U = union };
-                    SendInput(1, new INPUT[] { input }, INPUT.Size);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Write(ex);
-                }
+                // Coordinates must be normalized.  The bottom-right coordinate is mapped to 65535.
+                prev = new Tuple<float, float>(percentX,percentY);
+                var normalizedX = (double)percentX * 65535D;
+                var normalizedY = (double)percentY * 65535D;
+                var union = new InputUnion() { mi = new MOUSEINPUT() { dwFlags = MOUSEEVENTF.ABSOLUTE | MOUSEEVENTF.MOVE | MOUSEEVENTF.VIRTUALDESK, dx = (int)normalizedX, dy = (int)normalizedY, time = 0, mouseData = 0, dwExtraInfo = GetMessageExtraInfo() } };
+                var input = new INPUT() { type = InputType.MOUSE, U = union };
+                SendInput(1, new INPUT[] { input }, INPUT.Size);
             });
         }
 
-        public void SendMouseMove(float percentX, float percentY)
+        public async Task SendMouseWheel(int deltaY)
         {
-            TryOnInputDesktop(() =>
+            Try(() =>
             {
-                try
-                {
-                    // Coordinates must be normalized.  The bottom-right coordinate is mapped to 65535.
-                    prev = new Tuple<float, float>(percentX,percentY);
-                    var normalizedX = (double)percentX * 65535D;
-                    var normalizedY = (double)percentY * 65535D;
-                    var union = new InputUnion() { mi = new MOUSEINPUT() { dwFlags = MOUSEEVENTF.ABSOLUTE | MOUSEEVENTF.MOVE | MOUSEEVENTF.VIRTUALDESK, dx = (int)normalizedX, dy = (int)normalizedY, time = 0, mouseData = 0, dwExtraInfo = GetMessageExtraInfo() } };
-                    var input = new INPUT() { type = InputType.MOUSE, U = union };
-                    SendInput(1, new INPUT[] { input }, INPUT.Size);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Write(ex);
-                }
-            });
-        }
+                if (deltaY < 0)
+                    deltaY = -120;
+                else if (deltaY > 0)
+                    deltaY = 120;
 
-        public void SendMouseWheel(int deltaY)
-        {
-            TryOnInputDesktop(() =>
-            {
-                try
-                {
-                    if (deltaY < 0)
-                    {
-                        deltaY = -120;
-                    }
-                    else if (deltaY > 0)
-                    {
-                        deltaY = 120;
-                    }
-                    var union = new InputUnion() { mi = new MOUSEINPUT() { dwFlags = MOUSEEVENTF.WHEEL, dx = 0, dy = 0, time = 0, mouseData = deltaY, dwExtraInfo = GetMessageExtraInfo() } };
-                    var input = new INPUT() { type = InputType.MOUSE, U = union };
-                    SendInput(1, new INPUT[] { input }, INPUT.Size);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Write(ex);
-                }
+                var union = new InputUnion() { mi = new MOUSEINPUT() { dwFlags = MOUSEEVENTF.WHEEL, dx = 0, dy = 0, time = 0, mouseData = deltaY, dwExtraInfo = GetMessageExtraInfo() } };
+                var input = new INPUT() { type = InputType.MOUSE, U = union };
+                SendInput(1, new INPUT[] { input }, INPUT.Size);
             });
         }
 
 
-        public void SetKeyStatesUp()
+        public async Task SetKeyStatesUp()
         {
-            TryOnInputDesktop(() =>
+            Try(() =>
             {
                 var thread = new Thread(() =>
                 {
@@ -239,23 +197,14 @@ namespace DevSim.Services
         }
 
 
-        private void CheckQueue(CancellationToken cancelToken)
+        private async Task CheckQueue(CancellationToken cancelToken)
         {
             while (!cancelToken.IsCancellationRequested)
             {
-                try
-                {
-                    if (_inputActions.TryDequeue(out var action))
-                    {
-                        action();
-                    }
-                } catch (Exception err) {
-                    Console.WriteLine(err);
-                }
-                finally
-                {
+                if (_inputActions.TryDequeue(out var action))
+                    action();
+                else 
                     Thread.Sleep(1);
-                }
             }
 
             Logger.Write($"Stopping input processing on thread {Thread.CurrentThread.ManagedThreadId}.");
@@ -334,19 +283,16 @@ namespace DevSim.Services
             _inputProcessingThread.Start();
         }
 
-        private void TryOnInputDesktop(Action inputAction)
+        private void Try(Action inputAction)
         {
-            _inputActions.Enqueue(() =>
+            try
             {
-                try
-                {
-                    inputAction();
-                }
-                catch (Exception ex)
-                {
-                    Logger.Write(ex);
-                }
-            });
+                inputAction();
+            }
+            catch (Exception ex)
+            {
+                Logger.Write(ex);
+            }
         }
     }
 }

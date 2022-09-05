@@ -7,11 +7,11 @@ namespace DevSim.Interfaces
 {
     public interface IKeyboardMouseInput
     {
-        void SendKeyDown(string key);
-        void SendKeyUp(string key);
-        void SendMouseMove(float percentX, float percentY);
-        void SendMouseWheel(int deltaY);
-        void SetKeyStatesUp();
-        void SendMouseButtonAction(ButtonCode button, ButtonAction buttonAction);
+        Task SendKeyDown(string key);
+        Task SendKeyUp(string key);
+        Task SendMouseMove(float percentX, float percentY);
+        Task SendMouseWheel(int deltaY);
+        Task SetKeyStatesUp();
+        Task SendMouseButtonAction(ButtonCode button, ButtonAction buttonAction);
     }
 }
