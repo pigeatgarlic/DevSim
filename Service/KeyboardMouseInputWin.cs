@@ -163,35 +163,30 @@ namespace DevSim.Services
         {
             Try(() =>
             {
-                var thread = new Thread(() =>
+                foreach (VirtualKey key in Enum.GetValues(typeof(VirtualKey)))
                 {
-                    foreach (VirtualKey key in Enum.GetValues(typeof(VirtualKey)))
+                    try
                     {
-                        try
+                        var state = GetKeyState(key);
+                        if (state == -127)
                         {
-                            var state = GetKeyState(key);
-                            if (state == -127)
+                            var union = new InputUnion()
                             {
-                                var union = new InputUnion()
+                                ki = new KEYBDINPUT()
                                 {
-                                    ki = new KEYBDINPUT()
-                                    {
-                                        wVk = key,
-                                        wScan = 0,
-                                        time = 0,
-                                        dwFlags = KEYEVENTF.KEYUP,
-                                        dwExtraInfo = GetMessageExtraInfo()
-                                    }
-                                };
-                                var input = new INPUT() { type = InputType.KEYBOARD, U = union };
-                                SendInput(1, new INPUT[] { input }, INPUT.Size);
-                            }
+                                    wVk = key,
+                                    wScan = 0,
+                                    time = 0,
+                                    dwFlags = KEYEVENTF.KEYUP,
+                                    dwExtraInfo = GetMessageExtraInfo()
+                                }
+                            };
+                            var input = new INPUT() { type = InputType.KEYBOARD, U = union };
+                            SendInput(1, new INPUT[] { input }, INPUT.Size);
                         }
-                        catch { }
                     }
-                });
-                thread.SetApartmentState(ApartmentState.STA);
-                thread.Start();
+                    catch { }
+                }
             });
 
         }
