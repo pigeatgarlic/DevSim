@@ -15,14 +15,18 @@ namespace DevSim.Services
         private CancellationTokenSource _cancelTokenSource;
         private Thread _inputProcessingThread;
 
-        private Tuple<float,float> prev;
+        private bool relativeMouse;
 
         public KeyboardMouseInputWin()
         {
-            prev = new Tuple<float, float>(0,0);
+            relativeMouse = false;
             StartInputProcessingThread();
         }
 
+        public async Task ToggleRelativeMouse(bool IsOn) 
+        {
+            this.relativeMouse = IsOn;
+        }
 
         public async Task SendKeyUp(string key)
         {
@@ -133,13 +137,37 @@ namespace DevSim.Services
         {
             Try(() =>
             {
-                // Coordinates must be normalized.  The bottom-right coordinate is mapped to 65535.
-                prev = new Tuple<float, float>(percentX,percentY);
-                var normalizedX = (double)percentX * 65535D;
-                var normalizedY = (double)percentY * 65535D;
-                var union = new InputUnion() { mi = new MOUSEINPUT() { dwFlags = MOUSEEVENTF.ABSOLUTE | MOUSEEVENTF.MOVE | MOUSEEVENTF.VIRTUALDESK, dx = (int)normalizedX, dy = (int)normalizedY, time = 0, mouseData = 0, dwExtraInfo = GetMessageExtraInfo() } };
-                var input = new INPUT() { type = InputType.MOUSE, U = union };
-                SendInput(1, new INPUT[] { input }, INPUT.Size);
+                if (this.relativeMouse) {
+                    var union = new InputUnion() { 
+                        mi = new MOUSEINPUT() 
+                        { 
+                            dwFlags = MOUSEEVENTF.MOVE | MOUSEEVENTF.VIRTUALDESK, 
+                            dx = (int)percentX, 
+                            dy = (int)percentY, 
+                            time = 0, 
+                            mouseData = 0, 
+                            dwExtraInfo = GetMessageExtraInfo() 
+                        } 
+                    };
+                    var input = new INPUT() { type = InputType.MOUSE, U = union };
+                    SendInput(1, new INPUT[] { input }, INPUT.Size);
+                } else {
+                    var normalizedX = (double)percentX * 65535D;
+                    var normalizedY = (double)percentY * 65535D;
+                    var union = new InputUnion() { 
+                        mi = new MOUSEINPUT() 
+                        { 
+                            dwFlags = MOUSEEVENTF.ABSOLUTE | MOUSEEVENTF.MOVE | MOUSEEVENTF.VIRTUALDESK, 
+                            dx = (int)normalizedX, 
+                            dy = (int)normalizedY, 
+                            time = 0, 
+                            mouseData = 0, 
+                            dwExtraInfo = GetMessageExtraInfo() 
+                        } 
+                    };
+                    var input = new INPUT() { type = InputType.MOUSE, U = union };
+                    SendInput(1, new INPUT[] { input }, INPUT.Size);
+                }
             });
         }
 

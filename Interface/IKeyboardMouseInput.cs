@@ -12,6 +12,7 @@ namespace DevSim.Interfaces
         Task SendMouseMove(float percentX, float percentY);
         Task SendMouseWheel(int deltaY);
         Task SetKeyStatesUp();
+        Task ToggleRelativeMouse(bool IsOn);
         Task SendMouseButtonAction(ButtonCode button, ButtonAction buttonAction);
     }
 }
