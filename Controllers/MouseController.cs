@@ -41,12 +41,12 @@ namespace DevSim.Controllers
             _key.SendMouseButtonAction(button,ButtonAction.Down);
         }
         [HttpPost("Relative/On")]
-        public void PostRelOn([FromBody]ButtonCode button)
+        public void PostRelOn()
         {
             _key.ToggleRelativeMouse(true);
         }
         [HttpPost("Relative/Off")]
-        public void PostRelOff([FromBody]ButtonCode button)
+        public void PostRelOff()
         {
             _key.ToggleRelativeMouse(false);
         }
