@@ -8,7 +8,7 @@
     public enum ButtonCode
     {
         Left,
+        Middle,
         Right,
-        Middle
     }
 }
