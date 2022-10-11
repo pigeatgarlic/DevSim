@@ -12,7 +12,6 @@ namespace DevSim.Services
     public class KeyboardMouseInputWin : IKeyboardMouseInput
     {
         private readonly ConcurrentQueue<Action> _inputActions = new();
-        private CancellationTokenSource _cancelTokenSource;
         private Thread _inputProcessingThread;
 
         private bool relativeMouse;
@@ -220,18 +219,7 @@ namespace DevSim.Services
         }
 
 
-        private async Task CheckQueue(CancellationToken cancelToken)
-        {
-            while (!cancelToken.IsCancellationRequested)
-            {
-                if (_inputActions.TryDequeue(out var action))
-                    action();
-                else 
-                    Thread.Sleep(1);
-            }
 
-            Logger.Write($"Stopping input processing on thread {Thread.CurrentThread.ManagedThreadId}.");
-        }
 
         private bool ConvertJavaScriptKeyToVirtualKey(string key, out VirtualKey? result)
         {
@@ -285,6 +273,10 @@ namespace DevSim.Services
             }
             return true;
         }
+
+
+
+        private CancellationTokenSource _cancelTokenSource;
         private void StartInputProcessingThread()
         {
             _cancelTokenSource?.Cancel();
@@ -299,23 +291,33 @@ namespace DevSim.Services
                 Logger.Write($"New input processing thread started on thread {Thread.CurrentThread.ManagedThreadId}.");
                 _cancelTokenSource = new CancellationTokenSource();
 
-                CheckQueue(_cancelTokenSource.Token);
+                if (!Win32Interop.SwitchToInputDesktop()) {
+                    Logger.Write("Desktop switch failed during input processing.");
+                    StartInputProcessingThread();
+                    return;
+                }
+
+                while (!_cancelTokenSource.IsCancellationRequested)
+                {
+                    if (_inputActions.TryDequeue(out var action))
+                        action();
+                    else 
+                        Thread.Sleep(1);
+                }
+
+                Logger.Write($"Stopping input processing on thread {Thread.CurrentThread.ManagedThreadId}.");
             });
 
             _inputProcessingThread.SetApartmentState(ApartmentState.STA);
             _inputProcessingThread.Start();
         }
 
+
+
+
         private void Try(Action inputAction)
         {
-            try
-            {
-                inputAction();
-            }
-            catch (Exception ex)
-            {
-                Logger.Write(ex);
-            }
+            _inputActions.Enqueue(inputAction);
         }
     }
 }
