@@ -198,6 +198,7 @@ namespace DevSim.Services
                         var state = GetKeyState(key);
                         if (state == -127)
                         {
+                            Console.WriteLine($"reseting key {key}");
                             var union = new InputUnion()
                             {
                                 ki = new KEYBDINPUT()
