@@ -29,29 +29,29 @@ namespace DevSim.Services
             feedback = null;
 
             // recommended: run this in its own thread
-            Task.Run(() => {
-                while (true)
-                    try
-                    {
-                        // blocks for 250ms to not burn CPU cycles if no report is available
-                        // an overload is available that blocks indefinitely until the device is disposed, your choice!
-                        if (xbox == null) {
-                            Thread.Sleep(TimeSpan.FromSeconds(5));
-                            continue;
-                        }
+            // Task.Run(() => {
+            //     while (true)
+            //         try
+            //         {
+            //             // blocks for 250ms to not burn CPU cycles if no report is available
+            //             // an overload is available that blocks indefinitely until the device is disposed, your choice!
+            //             if (xbox == null) {
+            //                 Thread.Sleep(TimeSpan.FromSeconds(5));
+            //                 continue;
+            //             }
 
-                        xbox.FeedbackReceived += (object sender, Xbox360FeedbackReceivedEventArgs e) => {
-                            feedback = e;
-                        };
+            //             xbox.FeedbackReceived += (object sender, Xbox360FeedbackReceivedEventArgs e) => {
+            //                 feedback = e;
+            //             };
 
 
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.ToString());
-                        Thread.Sleep(1000);
-                    }
-            });
+            //         }
+            //         catch (Exception ex)
+            //         {
+            //             Console.WriteLine(ex.ToString());
+            //             Thread.Sleep(1000);
+            //         }
+            // });
         }
 
         public bool Status(){
@@ -83,7 +83,7 @@ namespace DevSim.Services
             feedback = null;
         }
 
-        public void pressButton(int index, bool pressed)
+        public async Task pressButton(int index, bool pressed)
         {
             Xbox360Button button;
             switch (index)
@@ -148,7 +148,7 @@ namespace DevSim.Services
         }
 
 
-        public void pressSlider(int index, float val)
+        public async Task pressSlider(int index, float val)
         {
             Xbox360Slider slider;
             switch (index)
@@ -172,7 +172,7 @@ namespace DevSim.Services
             xbox.SetSliderValue(slider,(byte)( val * Byte.MaxValue));
         }
 
-        public void pressAxis(int index, float val)
+        public async Task pressAxis(int index, float val)
         {
             Xbox360Axis slider;
             switch (index)
@@ -182,12 +182,14 @@ namespace DevSim.Services
                     break;
                 case 1:
                     slider = Xbox360Axis.LeftThumbY;
+                    val = -val;
                     break;
                 case 2:
                     slider = Xbox360Axis.RightThumbX;
                     break;
                 case 3:
-                    slider = Xbox360Axis.LeftThumbY;
+                    slider = Xbox360Axis.RightThumbY;
+                    val = -val;
                     break;
                 default:
                     Console.WriteLine($"unknown axis {index}");
@@ -199,8 +201,11 @@ namespace DevSim.Services
                 return;
             }
 
-            xbox.SetAxisValue(slider,(short) (val * 32767));
-            xbox.SubmitReport();
+            try {
+                xbox.SetAxisValue(slider,(short) (val * 32767));
+            }catch(Exception e) {
+                Console.WriteLine(e.Message);
+            }
         }
 
     }

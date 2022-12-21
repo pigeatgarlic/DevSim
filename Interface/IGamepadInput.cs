@@ -8,9 +8,9 @@ namespace DevSim.Interfaces
         public bool Status();
         public void Connect();
         public void DisConnect();
-        public void pressButton(int index, bool pressed);
-        public void pressSlider(int index, float val);
-        public void pressAxis(int index, float val);
+        public Task pressButton(int index, bool pressed);
+        public Task pressSlider(int index, float val);
+        public Task pressAxis(int index, float val);
         public Xbox360FeedbackReceivedEventArgs? getFeedback();
     }
 }
