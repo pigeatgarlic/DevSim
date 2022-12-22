@@ -21,7 +21,7 @@ namespace DevSim.Controllers
             _gamepad = gamepad;
         }
 
-        [HttpGet("Handshake")]
+        [HttpGet]
         public async Task Get(string? token)
         {
             var context = ControllerContext.HttpContext;
