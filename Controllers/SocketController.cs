@@ -62,7 +62,7 @@ namespace DevSim.Controllers
                                     _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Up);
                                     break;
                                 case "md":
-                                    _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Up);
+                                    _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Down);
                                     break;
 
                                 case "kd":
@@ -92,7 +92,9 @@ namespace DevSim.Controllers
                     }
                 } while (ws.State == WebSocketState.Open);
             }
-            catch (Exception ex) { }
+            catch (Exception ex) { 
+                Console.WriteLine(ex.Message);
+            }
             _log.LogInformation("Connection closed");
         }
 

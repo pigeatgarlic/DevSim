@@ -44,6 +44,8 @@ app.UseSwaggerUI(options =>
 // });
 
 app.UseAuthorization();
+app.UseWebSockets();
+
 
 app.MapControllers();
 
