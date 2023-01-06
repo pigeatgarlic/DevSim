@@ -8,14 +8,11 @@ namespace DevSim.Controllers
     [Route("Keyboard")]
     public class KeyboardController : ControllerBase
     {
-        private readonly ILogger<KeyboardController> _logger;
         
         private readonly IKeyboardMouseInput _key;
 
-        public KeyboardController(ILogger<KeyboardController> logger,
-                                         IKeyboardMouseInput key)
+        public KeyboardController( IKeyboardMouseInput key)
         {
-            _logger = logger;
             _key = key;
         }
 

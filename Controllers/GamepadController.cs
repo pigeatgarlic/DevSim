@@ -8,14 +8,10 @@ namespace DevSim.Controllers
     [Route("GamePad")]
     public class GamepadController : ControllerBase
     {
-        private readonly ILogger<MouseController> _logger;
-        
         private readonly IGamepadInput _key;
 
-        public GamepadController(ILogger<MouseController> logger,
-                               IGamepadInput key)
+        public GamepadController( IGamepadInput key)
         {
-            _logger = logger;
             _key = key;
         }
 

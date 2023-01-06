@@ -10,13 +10,10 @@ namespace DevSim.Controllers
     [Route("Socket")]
     public class SocketController : ControllerBase
     {
-        private readonly ILogger<KeyboardController> _log;
         private readonly IKeyboardMouseInput _key;
         private readonly IGamepadInput _gamepad;
-        public SocketController(ILogger<KeyboardController> logger,
-                                IGamepadInput gamepad,
+        public SocketController( IGamepadInput gamepad,
                                 IKeyboardMouseInput key) {
-            _log = logger;
             _key = key;
             _gamepad = gamepad;
         }
@@ -95,7 +92,7 @@ namespace DevSim.Controllers
             catch (Exception ex) { 
                 Console.WriteLine(ex.Message);
             }
-            _log.LogInformation("Connection closed");
+            Console.WriteLine("Connection closed");
         }
 
         private async Task<WebSocketReceiveResult> ReceiveMessage(WebSocket ws, Stream memoryStream)
@@ -120,7 +117,7 @@ namespace DevSim.Controllers
             try
             {
                 await ws.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-            } catch { _log.LogError("Fail to send websocket to client"); }
+            } catch { Console.WriteLine("Fail to send websocket to client"); }
         }
     }
 }
