@@ -15,18 +15,14 @@ namespace DevSim.Services
     public class GamepadInput : IGamepadInput
     {
         private readonly ViGEmClient vigem;
-        private IXbox360Controller? xbox;
-        public Xbox360FeedbackReceivedEventArgs? feedback;
-        public Xbox360FeedbackReceivedEventArgs? getFeedback(){
-            return feedback;
-        }
-
+        private ConcurrentDictionary<int,IXbox360Controller> xboxs;
+        private ConcurrentDictionary<int,Xbox360FeedbackReceivedEventHandler> feedbacks;
         public GamepadInput()
         {
             // initializes the SDK instance
             vigem = new ViGEmClient();
-            xbox = null;
-            feedback = null;
+            xboxs = new ConcurrentDictionary<int, IXbox360Controller>();
+            feedbacks = new ConcurrentDictionary<int, Xbox360FeedbackReceivedEventHandler>();
 
             // recommended: run this in its own thread
             // Task.Run(() => {
@@ -55,35 +51,28 @@ namespace DevSim.Services
         }
 
         public bool Status(){
-            return xbox != null;
+            return xboxs != null;
         }
 
-        public void Connect()
+        public IXbox360Controller Connect(int id)
         {
-            if (xbox != null) {
-                Console.WriteLine($"trying to connect while already connected");
-                return;
-            }
-
-            xbox = vigem.CreateXbox360Controller();
+            var xbox = vigem.CreateXbox360Controller();
             xbox.AutoSubmitReport = true;
             xbox.Connect();
-            feedback = new Xbox360FeedbackReceivedEventArgs(0,0,0);
+            xboxs.TryAdd(id,xbox);
+            return xbox;
+            // feedbacks.TryAdd(id,feedback);
         }
 
-        public void DisConnect()
+        public void DisConnect(int id)
         {
-            if (xbox == null) {
-                Console.WriteLine($"trying to disconnect while not connected");
-                return;
-            }
-
-            xbox.Disconnect();
-            xbox = null;
-            feedback = null;
+            xboxs.Remove(id,out var xbox);
+            if (xbox != null)
+                xbox.Disconnect();
+            // feedbacks.Remove(id,out var feedback);
         }
 
-        public async Task pressButton(int index, bool pressed)
+        public async Task pressButton(int gamepad, int index, bool pressed)
         {
             Xbox360Button button;
             switch (index)
@@ -139,16 +128,20 @@ namespace DevSim.Services
                     return;
             }
 
-            if (xbox == null) {
+            if (xboxs == null) {
                 Console.WriteLine("Gamepad is not connected");
                 return;
             }
 
+            xboxs.TryGetValue(gamepad,out var xbox);
+            if(xbox == null) {
+                xbox = Connect(gamepad);
+            }
             xbox.SetButtonState(button,pressed);
         }
 
 
-        public async Task pressSlider(int index, float val)
+        public async Task pressSlider(int gamepad, int index, float val)
         {
             Xbox360Slider slider;
             switch (index)
@@ -164,15 +157,19 @@ namespace DevSim.Services
                     return;
             }
 
-            if (xbox == null) {
+            if (xboxs == null) {
                 Console.WriteLine("Gamepad is not connected");
                 return;
             }
 
+            xboxs.TryGetValue(gamepad,out var xbox);
+            if(xbox == null) {
+                xbox = Connect(gamepad);
+            }
             xbox.SetSliderValue(slider,(byte)( val * Byte.MaxValue));
         }
 
-        public async Task pressAxis(int index, float val)
+        public async Task pressAxis(int gamepad, int index, float val)
         {
             Xbox360Axis slider;
             switch (index)
@@ -196,16 +193,16 @@ namespace DevSim.Services
                     return;
             }
 
-            if (xbox == null) {
+            if (xboxs == null) {
                 Console.WriteLine("Gamepad is not connected");
                 return;
             }
 
-            try {
-                xbox.SetAxisValue(slider,(short) (val * 32767));
-            }catch(Exception e) {
-                Console.WriteLine(e.Message);
+            xboxs.TryGetValue(gamepad,out var xbox);
+            if(xbox == null) {
+                xbox = Connect(gamepad);
             }
+            xbox.SetAxisValue(slider,(short) (val * 32767));
         }
 
     }

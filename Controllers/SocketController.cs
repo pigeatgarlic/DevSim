@@ -73,13 +73,13 @@ namespace DevSim.Controllers
                                     break;
 
                                 case "gs":
-                                    _gamepad.pressSlider(Int32.Parse(arr[1]),Single.Parse(arr[2]));
+                                    _gamepad.pressSlider(Int32.Parse(arr[1]),Int32.Parse(arr[2]),Single.Parse(arr[3]));
                                     break;
                                 case "ga":
-                                    _gamepad.pressAxis(Int32.Parse(arr[1]),Single.Parse(arr[2]));
+                                    _gamepad.pressAxis(Int32.Parse(arr[1]),Int32.Parse(arr[2]),Single.Parse(arr[3]));
                                     break;
                                 case "gb":
-                                    _gamepad.pressButton(Int32.Parse(arr[1]),arr[2] == "1");
+                                    _gamepad.pressButton(Int32.Parse(arr[1]),Int32.Parse(arr[2]),arr[2] == "1");
                                     break;
 
                                 default:
