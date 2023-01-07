@@ -34,10 +34,9 @@ namespace DevSim.Controllers
 
         private async Task Handle(int id, WebSocket ws)
         {
+            var connectedKeyboard = new List<string>();
             try
             {
-                var connectedKeyboard = new List<string>();
-
                 do
                 {
                     using (var memoryStream = new MemoryStream())
@@ -78,23 +77,23 @@ namespace DevSim.Controllers
                                     break;
 
                                 case "gcon":
-                                    var gp = $"${id}.${arr[1]}";
+                                    var gp = $"{id}.{arr[1]}";
                                     _gamepad.Connect(gp);
                                     connectedKeyboard.Add(gp);
                                     break;
                                 case "gdis":
-                                    var disgp = $"${id}.${arr[1]}";
+                                    var disgp = $"{id}.{arr[1]}";
                                     _gamepad.DisConnect(disgp);
                                     connectedKeyboard.RemoveAll(x => x == disgp);
                                     break;
                                 case "gs":
-                                    _gamepad.pressSlider($"${id}.${arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
+                                    _gamepad.pressSlider($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
                                     break;
                                 case "ga":
-                                    _gamepad.pressAxis($"${id}.${arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
+                                    _gamepad.pressAxis($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
                                     break;
                                 case "gb":
-                                    _gamepad.pressButton($"${id}.${arr[1]}",Int32.Parse(arr[2]),arr[2] == "1");
+                                    _gamepad.pressButton($"{id}.{arr[1]}",Int32.Parse(arr[2]),arr[3] == "1");
                                     break;
 
                                 default:
@@ -103,11 +102,11 @@ namespace DevSim.Controllers
                         }
                     }
                 } while (ws.State == WebSocketState.Open);
-                connectedKeyboard.ForEach(x => _gamepad.DisConnect(x));
             }
             catch (Exception ex) { 
                 Console.WriteLine(ex.Message);
             }
+            connectedKeyboard.ForEach(x => _gamepad.DisConnect(x));
             Console.WriteLine("Connection closed");
         }
 
