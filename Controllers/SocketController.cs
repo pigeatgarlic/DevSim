@@ -12,10 +12,12 @@ namespace DevSim.Controllers
     {
         private readonly IKeyboardMouseInput _key;
         private readonly IGamepadInput _gamepad;
+        private readonly Random _rand;
         public SocketController( IGamepadInput gamepad,
                                 IKeyboardMouseInput key) {
             _key = key;
             _gamepad = gamepad;
+            _rand = new Random();
         }
 
         [HttpGet]
@@ -24,15 +26,18 @@ namespace DevSim.Controllers
             var context = ControllerContext.HttpContext;
             if (context.WebSockets.IsWebSocketRequest)
             {
+                int random = _rand.Next();
                 var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                await Handle(webSocket);
+                await Handle(random,webSocket);
             }
         }
 
-        private async Task Handle(WebSocket ws)
+        private async Task Handle(int id, WebSocket ws)
         {
             try
             {
+                var connectedKeyboard = new List<string>();
+
                 do
                 {
                     using (var memoryStream = new MemoryStream())
@@ -72,14 +77,24 @@ namespace DevSim.Controllers
                                     _key.SetKeyStatesUp();
                                     break;
 
+                                case "gcon":
+                                    var gp = $"${id}.${arr[1]}";
+                                    _gamepad.Connect(gp);
+                                    connectedKeyboard.Add(gp);
+                                    break;
+                                case "gdis":
+                                    var disgp = $"${id}.${arr[1]}";
+                                    _gamepad.DisConnect(disgp);
+                                    connectedKeyboard.RemoveAll(x => x == disgp);
+                                    break;
                                 case "gs":
-                                    _gamepad.pressSlider(Int32.Parse(arr[1]),Int32.Parse(arr[2]),Single.Parse(arr[3]));
+                                    _gamepad.pressSlider($"${id}.${arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
                                     break;
                                 case "ga":
-                                    _gamepad.pressAxis(Int32.Parse(arr[1]),Int32.Parse(arr[2]),Single.Parse(arr[3]));
+                                    _gamepad.pressAxis($"${id}.${arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
                                     break;
                                 case "gb":
-                                    _gamepad.pressButton(Int32.Parse(arr[1]),Int32.Parse(arr[2]),arr[2] == "1");
+                                    _gamepad.pressButton($"${id}.${arr[1]}",Int32.Parse(arr[2]),arr[2] == "1");
                                     break;
 
                                 default:
@@ -88,6 +103,7 @@ namespace DevSim.Controllers
                         }
                     }
                 } while (ws.State == WebSocketState.Open);
+                connectedKeyboard.ForEach(x => _gamepad.DisConnect(x));
             }
             catch (Exception ex) { 
                 Console.WriteLine(ex.Message);

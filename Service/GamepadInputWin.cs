@@ -15,14 +15,14 @@ namespace DevSim.Services
     public class GamepadInput : IGamepadInput
     {
         private readonly ViGEmClient vigem;
-        private ConcurrentDictionary<int,IXbox360Controller> xboxs;
-        private ConcurrentDictionary<int,Xbox360FeedbackReceivedEventHandler> feedbacks;
+        private ConcurrentDictionary<string,IXbox360Controller> xboxs;
+        private ConcurrentDictionary<string,Xbox360FeedbackReceivedEventHandler> feedbacks;
         public GamepadInput()
         {
             // initializes the SDK instance
             vigem = new ViGEmClient();
-            xboxs = new ConcurrentDictionary<int, IXbox360Controller>();
-            feedbacks = new ConcurrentDictionary<int, Xbox360FeedbackReceivedEventHandler>();
+            xboxs = new ConcurrentDictionary<string, IXbox360Controller>();
+            feedbacks = new ConcurrentDictionary<string, Xbox360FeedbackReceivedEventHandler>();
 
             // recommended: run this in its own thread
             // Task.Run(() => {
@@ -50,11 +50,8 @@ namespace DevSim.Services
             // });
         }
 
-        public bool Status(){
-            return xboxs != null;
-        }
 
-        public IXbox360Controller Connect(int id)
+        public IXbox360Controller Connect(string id)
         {
             var xbox = vigem.CreateXbox360Controller();
             xbox.AutoSubmitReport = true;
@@ -64,7 +61,7 @@ namespace DevSim.Services
             // feedbacks.TryAdd(id,feedback);
         }
 
-        public void DisConnect(int id)
+        public void DisConnect(string id)
         {
             xboxs.Remove(id,out var xbox);
             if (xbox != null)
@@ -72,7 +69,7 @@ namespace DevSim.Services
             // feedbacks.Remove(id,out var feedback);
         }
 
-        public async Task pressButton(int gamepad, int index, bool pressed)
+        public async Task pressButton(string gamepad, int index, bool pressed)
         {
             Xbox360Button button;
             switch (index)
@@ -134,14 +131,13 @@ namespace DevSim.Services
             }
 
             xboxs.TryGetValue(gamepad,out var xbox);
-            if(xbox == null) {
-                xbox = Connect(gamepad);
+            if(xbox != null) {
+                xbox.SetButtonState(button,pressed);
             }
-            xbox.SetButtonState(button,pressed);
         }
 
 
-        public async Task pressSlider(int gamepad, int index, float val)
+        public async Task pressSlider(string gamepad, int index, float val)
         {
             Xbox360Slider slider;
             switch (index)
@@ -163,13 +159,12 @@ namespace DevSim.Services
             }
 
             xboxs.TryGetValue(gamepad,out var xbox);
-            if(xbox == null) {
-                xbox = Connect(gamepad);
+            if(xbox != null) {
+                xbox.SetSliderValue(slider,(byte)( val * Byte.MaxValue));
             }
-            xbox.SetSliderValue(slider,(byte)( val * Byte.MaxValue));
         }
 
-        public async Task pressAxis(int gamepad, int index, float val)
+        public async Task pressAxis(string gamepad, int index, float val)
         {
             Xbox360Axis slider;
             switch (index)
@@ -199,10 +194,9 @@ namespace DevSim.Services
             }
 
             xboxs.TryGetValue(gamepad,out var xbox);
-            if(xbox == null) {
-                xbox = Connect(gamepad);
+            if(xbox != null) {
+                xbox.SetAxisValue(slider,(short) (val * 32767));
             }
-            xbox.SetAxisValue(slider,(short) (val * 32767));
         }
 
     }
