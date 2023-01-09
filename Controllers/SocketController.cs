@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using DevSim.Interfaces;
 using DevSim.Enums;
 using System.Text;
+using System.Threading.Tasks;
 using System.Net.WebSockets;
 
 namespace DevSim.Controllers
@@ -28,6 +29,13 @@ namespace DevSim.Controllers
             {
                 int random = _rand.Next();
                 var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                Task.Run(async () => {
+                    try { while (webSocket.State == WebSocketState.Open) {
+                            await this.SendMessage(webSocket,"ping");
+                            Thread.Sleep(TimeSpan.FromSeconds(1).Milliseconds);
+                        }
+                    } catch (Exception e) { }
+                });
                 await Handle(random,webSocket);
             }
         }
@@ -37,6 +45,18 @@ namespace DevSim.Controllers
             var connectedKeyboard = new List<string>();
             try
             {
+                var pinged = true;
+                Task.Run(async () => {
+                    try { while (ws.State == WebSocketState.Open) {
+                        Thread.Sleep(TimeSpan.FromSeconds(3).Milliseconds);
+                        if (!pinged) {
+                            await ws.CloseAsync(WebSocketCloseStatus.Empty,"ping timeout",CancellationToken.None);
+                            return;
+                        }
+                        pinged = false;
+                    }} catch{}
+                });
+
                 do
                 {
                     using (var memoryStream = new MemoryStream())
@@ -96,6 +116,9 @@ namespace DevSim.Controllers
                                     _gamepad.pressButton($"{id}.{arr[1]}",Int32.Parse(arr[2]),arr[3] == "1");
                                     break;
 
+                                case "ping":
+                                    pinged = true;
+                                    break;
                                 default:
                                 break;
                             }
