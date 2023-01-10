@@ -32,7 +32,7 @@ namespace DevSim.Controllers
                 Task.Run(async () => {
                     try { while (webSocket.State == WebSocketState.Open) {
                             await this.SendMessage(webSocket,"ping");
-                            Thread.Sleep(TimeSpan.FromSeconds(1).Milliseconds);
+                            Thread.Sleep(TimeSpan.FromSeconds(1));
                         }
                     } catch (Exception e) { }
                 });
@@ -48,7 +48,7 @@ namespace DevSim.Controllers
                 var pinged = true;
                 Task.Run(async () => {
                     try { while (ws.State == WebSocketState.Open) {
-                        Thread.Sleep(TimeSpan.FromSeconds(3).Milliseconds);
+                        Thread.Sleep(TimeSpan.FromSeconds(3));
                         if (!pinged) {
                             await ws.CloseAsync(WebSocketCloseStatus.Empty,"ping timeout",CancellationToken.None);
                             return;

@@ -20,7 +20,6 @@ namespace DevSim.Services
         public KeyboardMouseInputWin()
         {
             relativeMouse = false;
-            StartInputProcessingThread();
         }
 
         public async Task ToggleRelativeMouse(bool IsOn) 
@@ -221,19 +220,6 @@ namespace DevSim.Services
         }
 
 
-        private async Task CheckQueue(CancellationToken cancelToken)
-        {
-            while (!cancelToken.IsCancellationRequested)
-            {
-                if (_inputActions.TryDequeue(out var action))
-                    action();
-                else 
-                    Thread.Sleep(1);
-            }
-
-            Logger.Write($"Stopping input processing on thread {Thread.CurrentThread.ManagedThreadId}.");
-        }
-
         private bool ConvertJavaScriptKeyToVirtualKey(string key, out VirtualKey? result)
         {
             result = key switch
@@ -286,37 +272,11 @@ namespace DevSim.Services
             }
             return true;
         }
-        private void StartInputProcessingThread()
-        {
-            _cancelTokenSource?.Cancel();
-            _cancelTokenSource?.Dispose();
-
-
-            // After BlockInput is enabled, only simulated input coming from the same thread
-            // will work.  So we have to start a new thread that runs continuously and
-            // processes a queue of input events.
-            _inputProcessingThread = new Thread(() =>
-            {
-                Logger.Write($"New input processing thread started on thread {Thread.CurrentThread.ManagedThreadId}.");
-                _cancelTokenSource = new CancellationTokenSource();
-
-                CheckQueue(_cancelTokenSource.Token);
-            });
-
-            _inputProcessingThread.SetApartmentState(ApartmentState.STA);
-            _inputProcessingThread.Start();
-        }
 
         private void Try(Action inputAction)
         {
-            try
-            {
-                inputAction();
-            }
-            catch (Exception ex)
-            {
-                Logger.Write(ex);
-            }
+            try { inputAction(); }
+            catch (Exception ex) { Logger.Write(ex); }
         }
     }
 }
