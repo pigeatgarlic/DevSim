@@ -6,11 +6,10 @@ namespace DevSim.Interfaces
 {
     public interface IGamepadInput
     {
-        public IXbox360Controller Connect(string gamepad_id);
+        public IXbox360Controller Connect(string gamepad_id,Xbox360FeedbackReceivedEventHandler rumble);
         public void DisConnect(string gamepad_id);
         public Task pressButton(string gamepad_id, int index, bool pressed);
         public Task pressSlider(string gamepad_id, int index, float val);
         public Task pressAxis(string gamepad_id, int index, float val);
-        // public Xbox360FeedbackReceivedEventArgs? getFeedback(int gamepad_id);
     }
 }

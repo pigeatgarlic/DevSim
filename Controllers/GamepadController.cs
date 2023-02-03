@@ -1,6 +1,7 @@
 // using Microsoft.AspNetCore.Mvc;
 // using DevSim.Interfaces;
 // using DevSim.Enums;
+// using Nefarius.ViGEm.Client.Targets.Xbox360;
 
 // namespace DevSim.Controllers
 // {
@@ -19,47 +20,33 @@
 //         [HttpPost("Slider")]
 //         public void Slider(int index, float val)
 //         {
-//             _key.pressSlider(index,val);
+//             _key.pressSlider("1",index,val);
 //         }
 //         [HttpPost("Axis")]
 //         public void Axis(int index, float val)
 //         {
-//             _key.pressAxis(index,val);
+//             _key.pressAxis("1",index,val);
 //         }
 //         [HttpPost("Button")]
 //         public void Button(int index, bool val)
 //         {
-//             _key.pressButton(index,val);
+//             _key.pressButton("1",index,val);
 //         }
 
 //         [HttpPost("Status")]
 //         public void Status(bool val)
 //         {
 //             if (val == true) {
-//                 _key.Connect();
+//                 _key.Connect("1", (object sender,Xbox360FeedbackReceivedEventArgs arg) => {
+//                     int LargeMotor  = (int)arg.LargeMotor;
+//                     int SmallMotor  = (int)arg.SmallMotor;
+//                     int LedNumber  = (int)arg.LedNumber;
+
+//                     Console.WriteLine($" {LargeMotor} {SmallMotor} {LedNumber} ");
+//                 });
 //             } else {
-//                 _key.DisConnect();
+//                 _key.DisConnect("1");
 //             }
-//         }
-
-//         [HttpGet("Status")]
-//         public bool GetStatus()
-//         {
-//             return _key.Status();
-//         }
-//         [HttpGet("Feedback")]
-//         public IActionResult getFeedback()
-//         {
-//             var fb = _key.getFeedback();
-//             if (fb == null) {
-//                 return NotFound();
-//             }
-
-//             var dict = new Dictionary<string,string>();
-//             dict["largeMotor"] = fb.LargeMotor.ToString();
-//             dict["smallMotor"] = fb.SmallMotor.ToString();
-//             dict["ledNumber"] = fb.LedNumber.ToString();
-//             return Ok(dict); 
 //         }
 //     }
 // }

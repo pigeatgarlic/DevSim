@@ -23,42 +23,17 @@ namespace DevSim.Services
             vigem = new ViGEmClient();
             xboxs = new ConcurrentDictionary<string, IXbox360Controller>();
             feedbacks = new ConcurrentDictionary<string, Xbox360FeedbackReceivedEventHandler>();
-
-            // recommended: run this in its own thread
-            // Task.Run(() => {
-            //     while (true)
-            //         try
-            //         {
-            //             // blocks for 250ms to not burn CPU cycles if no report is available
-            //             // an overload is available that blocks indefinitely until the device is disposed, your choice!
-            //             if (xbox == null) {
-            //                 Thread.Sleep(TimeSpan.FromSeconds(5));
-            //                 continue;
-            //             }
-
-            //             xbox.FeedbackReceived += (object sender, Xbox360FeedbackReceivedEventArgs e) => {
-            //                 feedback = e;
-            //             };
-
-
-            //         }
-            //         catch (Exception ex)
-            //         {
-            //             Console.WriteLine(ex.ToString());
-            //             Thread.Sleep(1000);
-            //         }
-            // });
         }
 
 
-        public IXbox360Controller Connect(string id)
+        public IXbox360Controller Connect(string id,Xbox360FeedbackReceivedEventHandler rumble)
         {
             var xbox = vigem.CreateXbox360Controller();
             xbox.AutoSubmitReport = true;
+            xbox.FeedbackReceived += rumble;
             xbox.Connect();
             xboxs.TryAdd(id,xbox);
             return xbox;
-            // feedbacks.TryAdd(id,feedback);
         }
 
         public void DisConnect(string id)
@@ -66,7 +41,6 @@ namespace DevSim.Services
             xboxs.Remove(id,out var xbox);
             if (xbox != null)
                 xbox.Disconnect();
-            // feedbacks.Remove(id,out var feedback);
         }
 
         public async Task pressButton(string gamepad, int index, bool pressed)

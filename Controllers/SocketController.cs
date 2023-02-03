@@ -4,6 +4,7 @@ using DevSim.Enums;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net.WebSockets;
+using Nefarius.ViGEm.Client.Targets.Xbox360;
 
 namespace DevSim.Controllers
 {
@@ -98,7 +99,13 @@ namespace DevSim.Controllers
 
                                 case "gcon":
                                     var gp = $"{id}.{arr[1]}";
-                                    _gamepad.Connect(gp);
+                                    _gamepad.Connect(gp, (object sender,Xbox360FeedbackReceivedEventArgs arg) => {
+                                        int LargeMotor  = (int)arg.LargeMotor;
+                                        int SmallMotor  = (int)arg.SmallMotor;
+                                        int LedNumber  = (int)arg.LedNumber;
+
+                                        SendMessage(ws,$"grum|{arr[1]}|{LargeMotor}|{SmallMotor}|{LedNumber}");
+                                    });
                                     connectedKeyboard.Add(gp);
                                     break;
                                 case "gdis":
