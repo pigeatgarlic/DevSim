@@ -71,30 +71,30 @@ namespace DevSim.Controllers
                             {
                                 case "mmr":
                                     await _key.ToggleRelativeMouse(true);
-                                    _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
+                                    Task.Run(() => _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2])));
                                     break;
                                 case "mma":
                                     await _key.ToggleRelativeMouse(false);
-                                    _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
+                                    Task.Run(() => _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2])));
                                     break;
                                 case "mw":
-                                    _key.SendMouseWheel(Int32.Parse(arr[1]));
+                                    Task.Run(() => _key.SendMouseWheel(Int32.Parse(arr[1])));
                                     break;
                                 case "mu":
-                                    _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Up);
+                                    Task.Run(() => _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Up));
                                     break;
                                 case "md":
-                                    _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Down);
+                                    Task.Run(() => _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Down));
                                     break;
 
                                 case "kd":
-                                    _key.SendKeyDown(arr[1]);
+                                    Task.Run(() => _key.SendKeyDown(arr[1]));
                                     break;
                                 case "ku":
-                                    _key.SendKeyUp(arr[1]);
+                                    Task.Run(() => _key.SendKeyUp(arr[1]));
                                     break;
                                 case "kr":
-                                    _key.SetKeyStatesUp();
+                                    Task.Run(() => _key.SetKeyStatesUp());
                                     break;
 
                                 case "gcon":
@@ -104,7 +104,7 @@ namespace DevSim.Controllers
                                         int SmallMotor  = (int)arg.SmallMotor;
                                         int LedNumber  = (int)arg.LedNumber;
 
-                                        SendMessage(ws,$"grum|{arr[1]}|{LargeMotor}|{SmallMotor}|{LedNumber}");
+                                        Task.Run(() => SendMessage(ws,$"grum|{arr[1]}|{LargeMotor}|{SmallMotor}|{LedNumber}"));
                                     });
                                     connectedKeyboard.Add(gp);
                                     break;
@@ -114,13 +114,13 @@ namespace DevSim.Controllers
                                     connectedKeyboard.RemoveAll(x => x == disgp);
                                     break;
                                 case "gs":
-                                    _gamepad.pressSlider($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
+                                    Task.Run(() => _gamepad.pressSlider($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3])));
                                     break;
                                 case "ga":
-                                    _gamepad.pressAxis($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
+                                    Task.Run(() => _gamepad.pressAxis($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3])));
                                     break;
                                 case "gb":
-                                    _gamepad.pressButton($"{id}.{arr[1]}",Int32.Parse(arr[2]),arr[3] == "1");
+                                    Task.Run(() => _gamepad.pressButton($"{id}.{arr[1]}",Int32.Parse(arr[2]),arr[3] == "1"));
                                     break;
 
                                 case "ping":
