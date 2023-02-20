@@ -15,7 +15,7 @@ namespace DevSim.Controllers
         private readonly IKeyboardMouseInput _key;
         private readonly IGamepadInput _gamepad;
         private readonly Random _rand;
-        public SocketController( IGamepadInput gamepad,
+        public SocketController(IGamepadInput gamepad,
                                 IKeyboardMouseInput key) {
             _key = key;
             _gamepad = gamepad;
@@ -32,10 +32,9 @@ namespace DevSim.Controllers
                 var webSocket = await context.WebSockets.AcceptWebSocketAsync();
                 Task.Run(async () => {
                     try { while (webSocket.State == WebSocketState.Open) {
-                            await this.SendMessage(webSocket,"ping");
-                            Thread.Sleep(TimeSpan.FromSeconds(1));
-                        }
-                    } catch (Exception e) { }
+                        await this.SendMessage(webSocket,"ping");
+                        Thread.Sleep(TimeSpan.FromSeconds(1));
+                    }} catch{}
                 });
                 await Handle(random,webSocket);
             }
@@ -43,18 +42,18 @@ namespace DevSim.Controllers
 
         private async Task Handle(int id, WebSocket ws)
         {
-            var connectedKeyboard = new List<string>();
+            var connectedGamepad = new List<string>();
             try
             {
                 var pinged = true;
                 Task.Run(async () => {
                     try { while (ws.State == WebSocketState.Open) {
                         Thread.Sleep(TimeSpan.FromSeconds(3));
-                        if (!pinged) {
-                            await ws.CloseAsync(WebSocketCloseStatus.Empty,"ping timeout",CancellationToken.None);
+                        if (pinged) {
+                            pinged = false;
                             return;
                         }
-                        pinged = false;
+                        await ws.CloseAsync(WebSocketCloseStatus.Empty,"ping timeout",CancellationToken.None);
                     }} catch{}
                 });
 
@@ -65,69 +64,12 @@ namespace DevSim.Controllers
                         var message = ReceiveMessage(ws, memoryStream).Result;
                         if (message.Count > 0) {
                             var receivedMessage = Encoding.UTF8.GetString(memoryStream.ToArray());
-
-                            var arr = receivedMessage.Split("|");
-                            switch (arr[0])
-                            {
-                                case "mmr":
-                                    await _key.ToggleRelativeMouse(true);
-                                    Task.Run(() => _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2])));
-                                    break;
-                                case "mma":
-                                    await _key.ToggleRelativeMouse(false);
-                                    Task.Run(() => _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2])));
-                                    break;
-                                case "mw":
-                                    Task.Run(() => _key.SendMouseWheel(Int32.Parse(arr[1])));
-                                    break;
-                                case "mu":
-                                    Task.Run(() => _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Up));
-                                    break;
-                                case "md":
-                                    Task.Run(() => _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Down));
-                                    break;
-
-                                case "kd":
-                                    Task.Run(() => _key.SendKeyDown(arr[1]));
-                                    break;
-                                case "ku":
-                                    Task.Run(() => _key.SendKeyUp(arr[1]));
-                                    break;
-                                case "kr":
-                                    Task.Run(() => _key.SetKeyStatesUp());
-                                    break;
-
-                                case "gcon":
-                                    var gp = $"{id}.{arr[1]}";
-                                    _gamepad.Connect(gp, (object sender,Xbox360FeedbackReceivedEventArgs arg) => {
-                                        int LargeMotor  = (int)arg.LargeMotor;
-                                        int SmallMotor  = (int)arg.SmallMotor;
-                                        int LedNumber  = (int)arg.LedNumber;
-
-                                        Task.Run(() => SendMessage(ws,$"grum|{arr[1]}|{LargeMotor}|{SmallMotor}|{LedNumber}"));
-                                    });
-                                    connectedKeyboard.Add(gp);
-                                    break;
-                                case "gdis":
-                                    var disgp = $"{id}.{arr[1]}";
-                                    _gamepad.DisConnect(disgp);
-                                    connectedKeyboard.RemoveAll(x => x == disgp);
-                                    break;
-                                case "gs":
-                                    Task.Run(() => _gamepad.pressSlider($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3])));
-                                    break;
-                                case "ga":
-                                    Task.Run(() => _gamepad.pressAxis($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3])));
-                                    break;
-                                case "gb":
-                                    Task.Run(() => _gamepad.pressButton($"{id}.{arr[1]}",Int32.Parse(arr[2]),arr[3] == "1"));
-                                    break;
-
-                                case "ping":
-                                    pinged = true;
-                                    break;
-                                default:
-                                break;
+                            if (receivedMessage == "ping") {
+                                pinged = true;
+                            } else {
+                                Task.Run(async () => { try { 
+                                    await HandleKey(id,ws,receivedMessage,connectedGamepad); 
+                                }catch(Exception e){Console.WriteLine(e.Message);} });
                             }
                         }
                     }
@@ -136,7 +78,7 @@ namespace DevSim.Controllers
             catch (Exception ex) { 
                 Console.WriteLine(ex.Message);
             }
-            connectedKeyboard.ForEach(x => _gamepad.DisConnect(x));
+            connectedGamepad.ForEach(x => _gamepad.DisConnect(x));
             Console.WriteLine("Connection closed");
         }
 
@@ -145,11 +87,9 @@ namespace DevSim.Controllers
             var readBuffer = new ArraySegment<byte>(new byte[4 * 1024]);
             WebSocketReceiveResult result;
 
-            do
-            {
+            do {
                 result = await ws.ReceiveAsync(readBuffer, CancellationToken.None);
-                await memoryStream.WriteAsync(readBuffer.Array, readBuffer.Offset, result.Count,
-                    CancellationToken.None);
+                await memoryStream.WriteAsync(readBuffer.Array, readBuffer.Offset, result.Count, CancellationToken.None);
             } while (!result.EndOfMessage);
             return result;
         }
@@ -159,10 +99,85 @@ namespace DevSim.Controllers
             var bytes = Encoding.UTF8.GetBytes(msg);
             var buffer = new ArraySegment<byte>(bytes);
 
-            try
-            {
+            try {
                 await ws.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-            } catch { Console.WriteLine("Fail to send websocket to client"); }
+            } catch { 
+                Console.WriteLine("Fail to send websocket to client"); 
+                await ws.CloseAsync(WebSocketCloseStatus.Empty,"ping timeout",CancellationToken.None);
+            }
+        }
+
+        private async Task HandleKey(int id, WebSocket ws, string receivedMessage, List<string> connectedGamepad) {
+            var arr = receivedMessage.Split("|");
+            switch (arr[0])
+            {
+                case "mmr":
+                    await _key.ToggleRelativeMouse(true);
+                    await _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
+                    break;
+                case "mma":
+                    await _key.ToggleRelativeMouse(false);
+                    await _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
+                    break;
+                case "mw":
+                    await _key.SendMouseWheel(Int32.Parse(arr[1]));
+                    break;
+                case "mu":
+                    await _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Up);
+                    break;
+                case "md":
+                    await _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Down);
+                    break;
+
+                case "kd":
+                    await _key.SendKeyDown(arr[1]);
+                    break;
+                case "ku":
+                    await _key.SendKeyUp(arr[1]);
+                    break;
+                case "kr":
+                    await _key.SetKeyStatesUp();
+                    break;
+
+                default:
+                break;
+            }
+
+            if (this._gamepad.failed) {
+                return;
+            }
+
+
+            switch (arr[0])
+            {
+                case "gcon":
+                    var gp = $"{id}.{arr[1]}";
+                    _gamepad.Connect(gp, (object sender,Xbox360FeedbackReceivedEventArgs arg) => {
+                        int LargeMotor  = (int)arg.LargeMotor;
+                        int SmallMotor  = (int)arg.SmallMotor;
+                        int LedNumber  = (int)arg.LedNumber;
+                        SendMessage(ws,$"grum|{arr[1]}|{LargeMotor}|{SmallMotor}|{LedNumber}");
+                    });
+                    connectedGamepad.Add(gp);
+                    break;
+                case "gdis":
+                    var disgp = $"{id}.{arr[1]}";
+                    _gamepad.DisConnect(disgp);
+                    connectedGamepad.RemoveAll(x => x == disgp);
+                    break;
+                case "gs":
+                    await _gamepad.pressSlider($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
+                    break;
+                case "ga":
+                    await _gamepad.pressAxis($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
+                    break;
+                case "gb":
+                    await _gamepad.pressButton($"{id}.{arr[1]}",Int32.Parse(arr[2]),arr[3] == "1");
+                    break;
+
+                default:
+                break;
+            }
         }
     }
 }

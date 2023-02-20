@@ -14,20 +14,31 @@ namespace DevSim.Services
 {
     public class GamepadInput : IGamepadInput
     {
+        public bool failed {get;}
         private readonly ViGEmClient vigem;
         private ConcurrentDictionary<string,IXbox360Controller> xboxs;
         private ConcurrentDictionary<string,Xbox360FeedbackReceivedEventHandler> feedbacks;
         public GamepadInput()
         {
-            // initializes the SDK instance
-            vigem = new ViGEmClient();
-            xboxs = new ConcurrentDictionary<string, IXbox360Controller>();
-            feedbacks = new ConcurrentDictionary<string, Xbox360FeedbackReceivedEventHandler>();
+            try {
+                // initializes the SDK instance
+                vigem = new ViGEmClient();
+                xboxs = new ConcurrentDictionary<string, IXbox360Controller>();
+                feedbacks = new ConcurrentDictionary<string, Xbox360FeedbackReceivedEventHandler>();
+                failed = false;
+            } catch (Exception e){
+                Console.WriteLine($"unable to setup gampad driver {e.Message}");
+                failed = true;
+            }
         }
 
 
         public IXbox360Controller Connect(string id,Xbox360FeedbackReceivedEventHandler rumble)
         {
+            if (this.failed) {
+                return null; 
+            }
+                
             var xbox = vigem.CreateXbox360Controller();
             xbox.AutoSubmitReport = true;
             xbox.FeedbackReceived += rumble;
@@ -38,6 +49,10 @@ namespace DevSim.Services
 
         public void DisConnect(string id)
         {
+            if (this.failed) {
+                return ; 
+            }
+
             xboxs.Remove(id,out var xbox);
             if (xbox != null)
                 xbox.Disconnect();
@@ -45,6 +60,10 @@ namespace DevSim.Services
 
         public async Task pressButton(string gamepad, int index, bool pressed)
         {
+            if (this.failed) {
+                return ; 
+            }
+
             Xbox360Button button;
             switch (index)
             {
@@ -113,6 +132,10 @@ namespace DevSim.Services
 
         public async Task pressSlider(string gamepad, int index, float val)
         {
+            if (this.failed) {
+                return; 
+            }
+
             Xbox360Slider slider;
             switch (index)
             {
@@ -140,6 +163,10 @@ namespace DevSim.Services
 
         public async Task pressAxis(string gamepad, int index, float val)
         {
+            if (this.failed) {
+                return; 
+            }
+
             Xbox360Axis slider;
             switch (index)
             {
@@ -172,7 +199,5 @@ namespace DevSim.Services
                 xbox.SetAxisValue(slider,(short) (val * 32767));
             }
         }
-
     }
-
 }
