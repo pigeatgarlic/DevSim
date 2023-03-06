@@ -14,11 +14,14 @@ namespace DevSim.Controllers
     {
         private readonly IKeyboardMouseInput _key;
         private readonly IGamepadInput _gamepad;
+        private readonly IClipboardService _clipboard;
         private readonly Random _rand;
         public SocketController(IGamepadInput gamepad,
+                                IClipboardService clipboard,
                                 IKeyboardMouseInput key) {
             _key = key;
             _gamepad = gamepad;
+            _clipboard = clipboard;
             _rand = new Random();
         }
 
@@ -139,6 +142,13 @@ namespace DevSim.Controllers
                     Task.Run(() => { _key.SetKeyStatesUp(); });
                     break;
 
+                case "cs":
+                    Task.Run(() => { _clipboard.Set(Base64Decode(arr[1])); });
+                    break;
+                case "cp":
+                    Task.Run(() => { _clipboard.Paste(); });
+                    break;
+
                 default:
                 break;
             }
@@ -178,6 +188,16 @@ namespace DevSim.Controllers
                 default:
                 break;
             }
+        }
+        public static string Base64Decode(string base64EncodedData) 
+        {
+            var base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+            return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
+        }
+        public static string Base64Encode(string plainText) 
+        {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return System.Convert.ToBase64String(plainTextBytes);
         }
     }
 }

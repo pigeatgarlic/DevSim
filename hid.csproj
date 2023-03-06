@@ -11,6 +11,7 @@
     <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.232" />
     <PackageReference Include="NewtonSoft.JSON" Version="13.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="TextCopy" Version="6.2.1" />
   </ItemGroup>
 
 </Project>

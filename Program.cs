@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddSingleton<IKeyboardMouseInput,KeyboardMouseInputWin>();
 builder.Services.AddSingleton<IGamepadInput,GamepadInput>();
+builder.Services.AddSingleton<IClipboardService,ClipboardServiceWin>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
