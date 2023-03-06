@@ -113,30 +113,30 @@ namespace DevSim.Controllers
             {
                 case "mmr":
                     await _key.ToggleRelativeMouse(true);
-                    await _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
+                    Task.Run(() => { _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2])); });
                     break;
                 case "mma":
                     await _key.ToggleRelativeMouse(false);
-                    await _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
+                    Task.Run(() => { _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2])); });
                     break;
                 case "mw":
-                    await _key.SendMouseWheel(Int32.Parse(arr[1]));
+                    Task.Run(() => { _key.SendMouseWheel(Int32.Parse(arr[1])); });
                     break;
                 case "mu":
-                    await _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Up);
+                    Task.Run(() => { _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Up); });
                     break;
                 case "md":
-                    await _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Down);
+                    Task.Run(() => { _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Down); });
                     break;
 
                 case "kd":
-                    await _key.SendKeyDown(arr[1]);
+                    Task.Run(() => { _key.SendKeyDown(arr[1]); });
                     break;
                 case "ku":
-                    await _key.SendKeyUp(arr[1]);
+                    Task.Run(() => { _key.SendKeyUp(arr[1]); });
                     break;
                 case "kr":
-                    await _key.SetKeyStatesUp();
+                    Task.Run(() => { _key.SetKeyStatesUp(); });
                     break;
 
                 default:

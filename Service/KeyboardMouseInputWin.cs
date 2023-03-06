@@ -188,35 +188,25 @@ namespace DevSim.Services
 
         public async Task SetKeyStatesUp()
         {
-            Try(() =>
-            {
-                foreach (VirtualKey key in Enum.GetValues(typeof(VirtualKey)))
-                {
-                    try
-                    {
-                        var state = GetKeyState(key);
-                        if (state == -127)
-                        {
-                            Console.WriteLine($"reseting key {key}");
-                            var union = new InputUnion()
-                            {
-                                ki = new KEYBDINPUT()
-                                {
-                                    wVk = key,
-                                    wScan = 0,
-                                    time = 0,
-                                    dwFlags = KEYEVENTF.KEYUP,
-                                    dwExtraInfo = GetMessageExtraInfo()
-                                }
-                            };
-                            var input = new INPUT() { type = InputType.KEYBOARD, U = union };
-                            SendInput(1, new INPUT[] { input }, INPUT.Size);
-                        }
-                    }
-                    catch { }
+            foreach (VirtualKey key in Enum.GetValues(typeof(VirtualKey))) { try {
+                var state = GetKeyState(key);
+                if (state != -127) {
+                    continue;
                 }
-            });
 
+                Console.WriteLine($"reseting key {key}");
+                var input = new INPUT() { 
+                    type = InputType.KEYBOARD, 
+                    U = new InputUnion() { ki = new KEYBDINPUT() {
+                        wVk = key,
+                        wScan = (ScanCodeShort)MapVirtualKeyEx((uint)key, VkMapType.MAPVK_VK_TO_VSC, GetKeyboardLayout()),
+                        time = 0,
+                        dwFlags = KEYEVENTF.KEYUP,
+                        dwExtraInfo = GetMessageExtraInfo()
+                    } 
+                } };
+                SendInput(1, new INPUT[] { input }, INPUT.Size);
+            } catch { } }
         }
 
 
