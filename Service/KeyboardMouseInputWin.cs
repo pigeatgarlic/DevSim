@@ -188,25 +188,14 @@ namespace DevSim.Services
 
         public async Task SetKeyStatesUp()
         {
-            foreach (VirtualKey key in Enum.GetValues(typeof(VirtualKey))) { try {
-                var state = GetKeyState(key);
-                if (state != -127) {
-                    continue;
-                }
-
-                Console.WriteLine($"reseting key {key}");
-                var input = new INPUT() { 
-                    type = InputType.KEYBOARD, 
-                    U = new InputUnion() { ki = new KEYBDINPUT() {
-                        wVk = key,
-                        wScan = (ScanCodeShort)MapVirtualKeyEx((uint)key, VkMapType.MAPVK_VK_TO_VSC, GetKeyboardLayout()),
-                        time = 0,
-                        dwFlags = KEYEVENTF.KEYUP,
-                        dwExtraInfo = GetMessageExtraInfo()
-                    } 
-                } };
-                SendInput(1, new INPUT[] { input }, INPUT.Size);
-            } catch { } }
+            var keys = new List<string> { "Down" , "Up" , "Left" , "Right" , "Enter" , "Esc" , "Alt" , "Control" ,
+                "Shift" , "PAUSE" , "BREAK" , "Backspace" , "Tab" , "CapsLock" , "Delete" , "Home" , "End" , "PageUp" ,
+                "PageDown" , "NumLock" , "Insert" , "ScrollLock" , "F1" , "F2" , "F3" , "F4" , "F5" ,
+                "F6" , "F7" , "F8" , "F9" , "F10" , "F11" , "F12" , "Meta" };
+            
+            foreach (var k in keys) {
+                await this.SendKeyUp(k);
+            }
         }
 
 
