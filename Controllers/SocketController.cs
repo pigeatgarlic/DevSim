@@ -116,37 +116,37 @@ namespace DevSim.Controllers
             {
                 case "mmr":
                     await _key.ToggleRelativeMouse(true);
-                    Task.Run(() => { _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2])); });
+                    _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
                     break;
                 case "mma":
                     await _key.ToggleRelativeMouse(false);
-                    Task.Run(() => { _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2])); });
+                    _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
                     break;
                 case "mw":
-                    Task.Run(() => { _key.SendMouseWheel(Int32.Parse(arr[1])); });
+                    _key.SendMouseWheel(Int32.Parse(arr[1]));
                     break;
                 case "mu":
-                    Task.Run(() => { _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Up); });
+                    _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Up);
                     break;
                 case "md":
-                    Task.Run(() => { _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Down); });
+                    _key.SendMouseButtonAction((ButtonCode)Int32.Parse(arr[1]),ButtonAction.Down);
                     break;
 
                 case "kd":
-                    Task.Run(() => { _key.SendKeyDown(arr[1]); });
+                    _key.SendKeyDown(arr[1]);
                     break;
                 case "ku":
-                    Task.Run(() => { _key.SendKeyUp(arr[1]); });
+                    _key.SendKeyUp(arr[1]);
                     break;
                 case "kr":
-                    Task.Run(() => { _key.SetKeyStatesUp(); });
+                    _key.SetKeyStatesUp();
                     break;
 
                 case "cs":
-                    Task.Run(() => { _clipboard.Set(Base64Decode(arr[1])); });
+                    _clipboard.Set(Base64Decode(arr[1]));
                     break;
                 case "cp":
-                    Task.Run(() => { _clipboard.Paste(); });
+                    _clipboard.Paste();
                     break;
 
                 default:
