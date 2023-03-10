@@ -53,7 +53,7 @@ namespace DevSim.Utilities
 
                     var receivedMessage = Encoding.UTF8.GetString(memoryStream.ToArray());
                     var msg = JsonConvert.DeserializeObject<T>(receivedMessage);
-                    action(msg);
+                    action(msg,ws);
                 } while (ws.State == WebSocketState.Open);
             } catch (Exception e) {
             }
