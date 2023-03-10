@@ -40,8 +40,9 @@ namespace DevSim.Controllers
 
         private async Task HandleKey(int id, WebSocket ws, string receivedMessage, List<string> connectedGamepad) {
             var arr = receivedMessage.Split("|");
-            switch (arr[0])
-            {
+            try {
+                switch (arr[0])
+                {
                 case "mmr":
                     await _key.ToggleRelativeMouse(true);
                     await _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
@@ -80,18 +81,15 @@ namespace DevSim.Controllers
                 case "ping":
                     await WS.SendMessage(ws,"ping");
                     break;
+                }
 
-                default:
-                break;
-            }
-
-            if (this._gamepad.failed) {
-                return;
-            }
+                if (this._gamepad.failed) 
+                    return;
+                
 
 
-            switch (arr[0])
-            {
+                switch (arr[0])
+                {
                 case "gcon":
                     var gp = $"{id}.{arr[1]}";
                     _gamepad.Connect(gp, async (object sender,Xbox360FeedbackReceivedEventArgs arg) => {
@@ -119,6 +117,9 @@ namespace DevSim.Controllers
 
                 default:
                 break;
+                }
+            } catch(Exception e) {
+                Console.WriteLine(e.Message);
             }
         }
     }
