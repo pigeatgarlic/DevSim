@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.WebSockets;
 using Nefarius.ViGEm.Client.Targets.Xbox360;
+using System.Globalization;
 
 namespace DevSim.Controllers
 {
@@ -116,11 +117,11 @@ namespace DevSim.Controllers
             {
                 case "mmr":
                     await _key.ToggleRelativeMouse(true);
-                    _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
+                    _key.SendMouseMove(Single.Parse(arr[1], CultureInfo.InvariantCulture),Single.Parse(arr[2], CultureInfo.InvariantCulture));
                     break;
                 case "mma":
                     await _key.ToggleRelativeMouse(false);
-                    _key.SendMouseMove(Single.Parse(arr[1]),Single.Parse(arr[2]));
+                    _key.SendMouseMove(Single.Parse(arr[1],  CultureInfo.InvariantCulture),Single.Parse(arr[2],  CultureInfo.InvariantCulture));
                     break;
                 case "mw":
                     _key.SendMouseWheel(Int32.Parse(arr[1]));
@@ -176,10 +177,10 @@ namespace DevSim.Controllers
                     connectedGamepad.RemoveAll(x => x == disgp);
                     break;
                 case "gs":
-                    await _gamepad.pressSlider($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
+                    await _gamepad.pressSlider($"{id}.{arr[1]}",Int32.Parse(arr[2], CultureInfo.InvariantCulture),Single.Parse(arr[3], CultureInfo.InvariantCulture));
                     break;
                 case "ga":
-                    await _gamepad.pressAxis($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3]));
+                    await _gamepad.pressAxis($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3], CultureInfo.InvariantCulture));
                     break;
                 case "gb":
                     await _gamepad.pressButton($"{id}.{arr[1]}",Int32.Parse(arr[2]),arr[3] == "1");
