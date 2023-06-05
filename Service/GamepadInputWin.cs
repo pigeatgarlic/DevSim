@@ -47,7 +47,7 @@ namespace DevSim.Services
             return xbox;
         }
 
-        public void DisConnect(string id)
+        public void Disconnect(string id)
         {
             if (this.failed) {
                 return ; 
