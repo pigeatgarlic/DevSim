@@ -5,11 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.WebSockets;
 using Nefarius.ViGEm.Client.Targets.Xbox360;
-<<<<<<< HEAD
 using System.Globalization;
-=======
 using DevSim.Utilities;
->>>>>>> 758c2f3bd29e0c61162a9eeb12b0d173394aeb6e
 
 namespace DevSim.Controllers
 {
