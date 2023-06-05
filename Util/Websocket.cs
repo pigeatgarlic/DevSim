@@ -36,7 +36,7 @@ namespace DevSim.Utilities
             }
         }
 
-        public static async Task Handle<T>(HttpContext context,Action<T,WebSocket> action)
+        public static async Task Handle<T>(HttpContext context,Action<string,WebSocket> action)
         {
             if (!context.WebSockets.IsWebSocketRequest)
                 return;
@@ -52,8 +52,7 @@ namespace DevSim.Utilities
                         continue;
 
                     var receivedMessage = Encoding.UTF8.GetString(memoryStream.ToArray());
-                    var msg = JsonConvert.DeserializeObject<T>(receivedMessage);
-                    action(msg,ws);
+                    action(receivedMessage,ws);
                 } while (ws.State == WebSocketState.Open);
             } catch (Exception e) {
             }
