@@ -36,7 +36,7 @@ namespace DevSim.Utilities
             }
         }
 
-        public static async Task Handle<T>(HttpContext context,Action<string,WebSocket> action)
+        public static async Task Handle(HttpContext context,Action<string,WebSocket> action)
         {
             if (!context.WebSockets.IsWebSocketRequest)
                 return;

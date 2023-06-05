@@ -32,7 +32,7 @@ namespace DevSim.Controllers
         {
             int id = _rand.Next();
             var connectedGamepad = new List<string>();
-            await WS.Handle<string>(HttpContext,async (val,ws) => {
+            await WS.Handle(HttpContext,async (val,ws) => {
                 try { await HandleKey(id,ws,val,connectedGamepad); }
                 catch(Exception e) {Console.WriteLine(e.Message);}
             });
