@@ -40,6 +40,7 @@ namespace DevSim.Services
                 xbox.Connect();
                 xboxs.TryAdd(this.SingleID,xbox);
                 failed = false;
+                Console.WriteLine($"setup gampad driver successful");
             } catch (Exception e){
                 Console.WriteLine($"unable to setup gampad driver {e.StackTrace}");
                 failed = true;
@@ -153,7 +154,7 @@ namespace DevSim.Services
                     Console.WriteLine($"unknown slider {index}");
                     return;
             }
-            
+
             xboxs.TryGetValue(this.SingleID,out var xbox);
             if(xbox != null) {
                 xbox.SetSliderValue(slider,(byte)( val * Byte.MaxValue));
