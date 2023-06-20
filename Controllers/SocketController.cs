@@ -92,8 +92,7 @@ namespace DevSim.Controllers
             switch (arr[0])
             {
             case "gcon":
-                var gp = $"{id}.{arr[1]}";
-                _gamepad.Connect(gp, (object sender,Xbox360FeedbackReceivedEventArgs arg) => {
+                var gp = _gamepad.Connect((Xbox360FeedbackReceivedEventArgs arg) => {
                     int LargeMotor  = (int)arg.LargeMotor;
                     int SmallMotor  = (int)arg.SmallMotor;
                     int LedNumber  = (int)arg.LedNumber;
@@ -101,19 +100,16 @@ namespace DevSim.Controllers
                 });
                 connectedGamepad.Add(gp);
                 return;
-            case "gdis":
-                var disgp = $"{id}.{arr[1]}";
-                _gamepad.Disconnect(disgp);
-                connectedGamepad.RemoveAll(x => x == disgp);
+            case "gdis": // OPTION
                 return;
             case "gs":
-                await _gamepad.pressSlider($"{id}.{arr[1]}",Int32.Parse(arr[2], CultureInfo.InvariantCulture),Single.Parse(arr[3], CultureInfo.InvariantCulture));
+                await _gamepad.pressSlider(Int32.Parse(arr[2], CultureInfo.InvariantCulture),Single.Parse(arr[3], CultureInfo.InvariantCulture));
                 return;
             case "ga":
-                await _gamepad.pressAxis($"{id}.{arr[1]}",Int32.Parse(arr[2]),Single.Parse(arr[3], CultureInfo.InvariantCulture));
+                await _gamepad.pressAxis(Int32.Parse(arr[2]),Single.Parse(arr[3], CultureInfo.InvariantCulture));
                 return;
             case "gb":
-                await _gamepad.pressButton($"{id}.{arr[1]}",Int32.Parse(arr[2]),arr[3] == "1");
+                await _gamepad.pressButton(Int32.Parse(arr[2]),arr[3] == "1");
                 return;
             }
         }

@@ -4,13 +4,16 @@ using Nefarius.ViGEm.Client.Targets.Xbox360;
 
 namespace DevSim.Interfaces
 {
+    public delegate void GamepadFeedbackHandler(Xbox360FeedbackReceivedEventArgs e);
     public interface IGamepadInput
     {
         public bool failed {get;}
-        public IXbox360Controller Connect(string gamepad_id,Xbox360FeedbackReceivedEventHandler rumble);
-        public void Disconnect(string gamepad_id);
-        public Task pressButton(string gamepad_id, int index, bool pressed);
-        public Task pressSlider(string gamepad_id, int index, float val);
-        public Task pressAxis(string gamepad_id, int index, float val);
+        public string Connect(GamepadFeedbackHandler rumble);
+        public void Disconnect(string gamepad);
+
+        
+        public Task pressButton(int index, bool pressed);
+        public Task pressSlider(int index, float val);
+        public Task pressAxis(int index, float val);
     }
 }

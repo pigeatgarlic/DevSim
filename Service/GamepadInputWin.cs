@@ -17,48 +17,57 @@ namespace DevSim.Services
         public bool failed {get;}
         private readonly ViGEmClient vigem;
         private ConcurrentDictionary<string,IXbox360Controller> xboxs;
-        private ConcurrentDictionary<string,Xbox360FeedbackReceivedEventHandler> feedbacks;
+        private ConcurrentDictionary<string,GamepadFeedbackHandler> feedbacks;
+        private string SingleID = "unique";
+
         public GamepadInput()
         {
+            xboxs     = new ConcurrentDictionary<string, IXbox360Controller>();
+            feedbacks = new ConcurrentDictionary<string, GamepadFeedbackHandler>();
+
             try {
                 // initializes the SDK instance
                 vigem = new ViGEmClient();
-                xboxs = new ConcurrentDictionary<string, IXbox360Controller>();
-                feedbacks = new ConcurrentDictionary<string, Xbox360FeedbackReceivedEventHandler>();
+
+                var xbox = vigem.CreateXbox360Controller();
+                xbox.AutoSubmitReport = true;
+                xbox.FeedbackReceived += (object sender,Xbox360FeedbackReceivedEventArgs arg) => {
+                    this.feedbacks.ToList().ForEach(x => {
+                        x.Value(arg);
+                    });
+                };
+
+                xbox.Connect();
+                xboxs.TryAdd(this.SingleID,xbox);
                 failed = false;
             } catch (Exception e){
-                Console.WriteLine($"unable to setup gampad driver {e.Message}");
+                Console.WriteLine($"unable to setup gampad driver {e.StackTrace}");
                 failed = true;
             }
         }
 
 
-        public IXbox360Controller Connect(string id,Xbox360FeedbackReceivedEventHandler rumble)
+        public string Connect(GamepadFeedbackHandler handler)
         {
             if (this.failed) {
-                return null; 
+                return ""; 
             }
-                
-            var xbox = vigem.CreateXbox360Controller();
-            xbox.AutoSubmitReport = true;
-            xbox.FeedbackReceived += rumble;
-            xbox.Connect();
-            xboxs.TryAdd(id,xbox);
-            return xbox;
+
+            var random = (new Random()).Next().ToString();
+            this.feedbacks.TryAdd(random,handler);
+            return random;
         }
 
         public void Disconnect(string id)
         {
             if (this.failed) {
-                return ; 
+                return; 
             }
 
-            xboxs.Remove(id,out var xbox);
-            if (xbox != null)
-                xbox.Disconnect();
+            this.feedbacks.TryRemove(id,out var handler);
         }
 
-        public async Task pressButton(string gamepad, int index, bool pressed)
+        public async Task pressButton(int index, bool pressed)
         {
             if (this.failed) {
                 return ; 
@@ -118,19 +127,14 @@ namespace DevSim.Services
                     return;
             }
 
-            if (xboxs == null) {
-                Console.WriteLine("Gamepad is not connected");
-                return;
-            }
-
-            xboxs.TryGetValue(gamepad,out var xbox);
+            xboxs.TryGetValue(this.SingleID,out var xbox);
             if(xbox != null) {
                 xbox.SetButtonState(button,pressed);
             }
         }
 
 
-        public async Task pressSlider(string gamepad, int index, float val)
+        public async Task pressSlider(int index, float val)
         {
             if (this.failed) {
                 return; 
@@ -149,19 +153,14 @@ namespace DevSim.Services
                     Console.WriteLine($"unknown slider {index}");
                     return;
             }
-
-            if (xboxs == null) {
-                Console.WriteLine("Gamepad is not connected");
-                return;
-            }
-
-            xboxs.TryGetValue(gamepad,out var xbox);
+            
+            xboxs.TryGetValue(this.SingleID,out var xbox);
             if(xbox != null) {
                 xbox.SetSliderValue(slider,(byte)( val * Byte.MaxValue));
             }
         }
 
-        public async Task pressAxis(string gamepad, int index, float val)
+        public async Task pressAxis(int index, float val)
         {
             if (this.failed) {
                 return; 
@@ -189,12 +188,7 @@ namespace DevSim.Services
                     return;
             }
 
-            if (xboxs == null) {
-                Console.WriteLine("Gamepad is not connected");
-                return;
-            }
-
-            xboxs.TryGetValue(gamepad,out var xbox);
+            xboxs.TryGetValue(this.SingleID,out var xbox);
             if(xbox != null) {
                 xbox.SetAxisValue(slider,(short) (val * 32767));
             }
