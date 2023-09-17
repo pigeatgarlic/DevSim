@@ -1,1 +1,1 @@
-dotnet publish . --output "package/hid" --self-contained true --runtime win-x64 
+dotnet publish -r win-x64 -p:PublishSingleFile=true --self-contained true --output "../package"
